@@ -1,5 +1,6 @@
 *.iml
 .gradle
+/.idea/gradle.xml
 /local.properties
 /.idea/caches
 /.idea/libraries
@@ -11,7 +12,6 @@
 /.idea/migrations.xml
 /.idea/planningMode.xml
 /.idea/vcs.xml
-/.idea/gradle.xml
 .DS_Store
 /build
 /captures
