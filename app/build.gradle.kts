@@ -29,9 +29,16 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:data"))
+    implementation(project(":core:remote-config:api"))
+    implementation(project(":core:prefs:api"))
+    implementation(project(":core:remote-config:impl"))
+    implementation(project(":core:prefs:impl"))
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.material)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.core.splashscreen)
