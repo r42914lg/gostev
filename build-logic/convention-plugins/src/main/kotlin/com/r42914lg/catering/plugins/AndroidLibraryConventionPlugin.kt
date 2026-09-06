@@ -12,7 +12,6 @@ open class AndroidLibraryConventionPlugin : Plugin<Project> {
         with(project) {
             with(pluginManager) {
                 apply("com.android.library")
-                apply("org.jetbrains.kotlin.android")
             }
             extensions.configure<LibraryExtension> {
                 compileSdk = libs.versions.compileSdk.get().toInt()
