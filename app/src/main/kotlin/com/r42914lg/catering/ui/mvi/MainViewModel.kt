@@ -11,13 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import kotlin.time.Clock
 
 @Stable
 internal interface MainStateHolder {
@@ -57,7 +57,7 @@ internal class MainViewModel(
     private fun loadData() {
         viewModelScope.launch {
             allEvents = calendarDataSource.getCalendarEvents()
-            myAssignments = calendarDataSource.getEventAssignments(currentUserId)
+            //myAssignments = calendarDataSource.getEventAssignments(currentUserId)
             updateState()
         }
     }

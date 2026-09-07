@@ -2,6 +2,7 @@
 .gradle
 /.idea/gradle.xml
 /local.properties
+apikeys.properties
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -18,3 +19,4 @@
 .externalNativeBuild
 .cxx
 local.properties
+apikeys.properties

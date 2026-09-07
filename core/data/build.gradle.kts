@@ -1,10 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.kotlin.library)
 }
 
 val generateSupabaseConfig by tasks.registering {
-    val url = project.findProperty("supabase.url") ?: ""
-    val key = project.findProperty("supabase.key") ?: ""
+    val keysFile = rootProject.file("apikeys.properties")
+    val props = Properties()
+    if (keysFile.exists()) {
+        keysFile.inputStream().use { props.load(it) }
+    }
+    val url = props.getProperty("supabase.url") ?: ""
+    val key = props.getProperty("supabase.key") ?: ""
     val outputDir = layout.buildDirectory.dir("generated/supabase/kotlin")
 
     inputs.property("url", url)
@@ -34,7 +41,7 @@ kotlin {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.serialization.json)
-    implementation(libs.kotlinx.datetime)
+    api(libs.kotlinx.datetime)
     api(libs.koin.core)
 
     implementation(platform(libs.supabase.bom))

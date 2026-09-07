@@ -7,17 +7,17 @@ import io.github.jan.supabase.postgrest.postgrest
 
 class CalendarDataSource(private val supabaseClient: SupabaseClient) {
     suspend fun getCalendarEvents(): List<CalendarEvent> =
-        supabaseClient.postgrest.from("events").select().decodeList()
+        supabaseClient.postgrest.from("calendar_events").select().decodeList()
 
     suspend fun getEventAssignments(userId: Long): List<EventAssignment> =
-        supabaseClient.postgrest.from("assignments").select {
+        supabaseClient.postgrest.from("event_assignments").select {
             filter {
-                eq("userId", userId)
+                eq("user_id", userId)
             }
         }.decodeList()
 
-    suspend fun applyForEvent(userId: Long, eventId: Long): Boolean = try {
-        supabaseClient.postgrest.from("assignments").insert(
+    suspend fun applyForEvent(userId: String, eventId: Long): Boolean = try {
+        supabaseClient.postgrest.from("event_assignments").insert(
             EventAssignment(userId = userId, eventId = eventId)
         )
         true
