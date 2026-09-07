@@ -1,8 +1,22 @@
 package com.r42914lg.catering.ui.mvi
 
-import com.r42914lg.catering.core.data.model.CalendarEvent
+import kotlinx.datetime.LocalDate
 
-data class ScreenState(
-    val month: String,
-    val visitors: List<CalendarEvent> = emptyList(),
+internal data class ScreenState(
+    val monthTitle: String,
+    val yearTitle: String,
+    val days: List<CalendarDay> = emptyList(),
+)
+
+internal data class CalendarDay(
+    val date: LocalDate,
+    val isCurrentMonth: Boolean,
+    val isToday: Boolean,
+    val isSelected: Boolean,
+    val dots: List<EventDot>
+)
+
+internal data class EventDot(
+    val isApplied: Boolean,
+    val eventId: Long,
 )

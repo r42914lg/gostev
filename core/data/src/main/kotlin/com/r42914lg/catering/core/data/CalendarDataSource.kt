@@ -21,7 +21,7 @@ class CalendarDataSource(private val supabaseClient: SupabaseClient) {
             EventAssignment(userId = userId, eventId = eventId)
         )
         true
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         false
     }
 }

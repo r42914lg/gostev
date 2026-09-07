@@ -34,6 +34,7 @@ kotlin {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.serialization.json)
+    implementation(libs.kotlinx.datetime)
     api(libs.koin.core)
 
     implementation(platform(libs.supabase.bom))
