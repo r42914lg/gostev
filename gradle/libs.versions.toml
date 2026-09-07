@@ -1,8 +1,4 @@
 [versions]
-datastorePreferencesCore = "1.2.1"
-materialIconsExtended = "1.7.8"
-parseSdkAndroid = "4.3.0"
-firebaseBom = "34.7.0"
 targetSdk = "36"
 versionCode="1"
 versionName="1.0"
@@ -12,25 +8,21 @@ minSdk = "24"
 agp = "9.3.2"
 kotlin = "2.4.10"
 coreKtx = "1.19.0"
-appcompat = "1.7.0"
-material = "1.12.0"
+appcompat = "1.8.0"
+material = "1.14.0"
+datastorePreferencesCore = "1.2.1"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
 composeBom = "2026.08.00"
 kotlinxSerializationVersion = "1.11.0"
 kotlinxCoroutinesCore = "1.11.0"
-kotlinVersion-kspPluginVersion = "2.3.2"
-lifecycleProcess = "2.11.0"
 koinVersion = "4.2.2"
-nav3Core = "1.1.7"
 coreSplashscreen = "1.2.0"
 
 [libraries]
 android-build-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
-androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferencesCore" }
 kotlin-composeCompiler-gradlePlugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -41,8 +33,6 @@ material = { group = "com.google.android.material", name = "material", version.r
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
-androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
@@ -58,9 +48,6 @@ kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-s
 
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koinVersion" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koinVersion" }
-
-androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
-androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
 
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 
