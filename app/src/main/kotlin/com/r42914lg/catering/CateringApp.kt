@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.r42914lg.catering.core.data.DataInitializer
 import com.r42914lg.catering.core.prefs.PrefsInitializer
+import com.r42914lg.catering.details.DetailsInitializer
 import com.r42914lg.catering.remoteconfig.RemoteConfigInitializer
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.loadKoinModules
@@ -27,6 +28,7 @@ class CateringApp : Application(), CoreApp {
                     PrefsInitializer().module,
                     RemoteConfigInitializer().module,
                     DataInitializer().module,
+                    DetailsInitializer().module,
                     AppInitializer().module
                 )
             )

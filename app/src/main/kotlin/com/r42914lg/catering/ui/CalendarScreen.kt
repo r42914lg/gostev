@@ -11,13 +11,9 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
@@ -25,13 +21,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
-import com.r42914lg.catering.mvi.CalendarDay
-import com.r42914lg.catering.mvi.EventDot
-import com.r42914lg.catering.mvi.MainStateHolder
-import com.r42914lg.catering.mvi.MainViewModel
-import com.r42914lg.catering.mvi.ScreenEvent
-import com.r42914lg.catering.mvi.ScreenState
+import com.r42914lg.catering.mvi.*
+import com.r42914lg.catering.details.DetailsContent
 import com.r42914lg.catering.theme.*
+import com.r42914lg.catering.core.data.model.CalendarEvent
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
@@ -47,6 +40,9 @@ internal fun CalendarScreen(
     modifier: Modifier = Modifier
 ) {
     val state by stateHolder.screenState.collectAsState()
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var selectedDayEvents by remember { mutableStateOf<List<CalendarEvent>>(emptyList()) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -81,10 +77,35 @@ internal fun CalendarScreen(
 
             CalendarGrid(
                 days = state.days,
-                onDateSelected = { stateHolder.onScreenAction(ScreenEvent.DateSelected(it)) }
+                onDateSelected = { date ->
+                    val day = state.days.find { it.date == date }
+                    if (day != null && day.events.isNotEmpty()) {
+                        selectedDayEvents = day.events
+                        showBottomSheet = true
+                    }
+                    stateHolder.onScreenAction(ScreenEvent.DateSelected(date))
+                }
             )
 
             Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = sheetState,
+            containerColor = Paper,
+            dragHandle = null
+        ) {
+            DetailsContent(
+                events = selectedDayEvents,
+                assignments = state.assignments,
+                onAuthorizeClick = {
+                    showBottomSheet = false
+                    // TODO: Open drawer
+                }
+            )
         }
     }
 }

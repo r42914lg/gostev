@@ -135,6 +135,7 @@ internal class MainViewModel(
                 isCurrentMonth = isCurrentMonth,
                 isToday = date == today,
                 isSelected = date == selectedDate,
+                events = dayEvents,
                 dots = dots,
             )
         }
@@ -144,6 +145,7 @@ internal class MainViewModel(
             monthTitle = currentMonth.month.name.lowercase().replaceFirstChar { c -> c.uppercase() },
             yearTitle = currentMonth.year.toString(),
             days = calendarDays,
+            assignments = myAssignments
         )
     }
 }

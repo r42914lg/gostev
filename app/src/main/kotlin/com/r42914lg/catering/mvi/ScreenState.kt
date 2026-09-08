@@ -1,5 +1,7 @@
 package com.r42914lg.catering.mvi
 
+import com.r42914lg.catering.core.data.model.CalendarEvent
+import com.r42914lg.catering.core.data.model.EventAssignment
 import kotlinx.datetime.LocalDate
 
 internal data class ScreenState(
@@ -8,6 +10,7 @@ internal data class ScreenState(
     val monthTitle: String = "",
     val yearTitle: String = "",
     val days: List<CalendarDay> = emptyList(),
+    val assignments: List<EventAssignment> = emptyList(),
 ) {
     fun copyWithIsLoading(isLoading: Boolean) = copy(isLoading = isLoading)
 }
@@ -17,7 +20,8 @@ internal data class CalendarDay(
     val isCurrentMonth: Boolean,
     val isToday: Boolean,
     val isSelected: Boolean,
-    val dots: List<EventDot>
+    val events: List<CalendarEvent> = emptyList(),
+    val dots: List<EventDot> = emptyList()
 )
 
 internal data class EventDot(

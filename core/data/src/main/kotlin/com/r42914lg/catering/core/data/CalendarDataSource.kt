@@ -28,4 +28,16 @@ class CalendarDataSource(
     } catch (_: Exception) {
         false
     }
+
+    suspend fun cancelEventAssignment(userId: String, eventId: Long): Boolean = try {
+        supabaseClient.from("event_assignments").delete {
+            filter {
+                eq("userId", userId)
+                eq("eventId", eventId)
+            }
+        }
+        true
+    } catch (_: Exception) {
+        false
+    }
 }

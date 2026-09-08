@@ -34,6 +34,8 @@ dependencies {
     implementation(project(":core:prefs:api"))
     implementation(project(":core:remote-config:impl"))
     implementation(project(":core:prefs:impl"))
+    implementation(project(":features:event-details"))
+    implementation(project(":features:authorization"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.core.ktx)
