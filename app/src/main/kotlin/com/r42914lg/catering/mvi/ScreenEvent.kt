@@ -1,4 +1,4 @@
-package com.r42914lg.catering.ui.mvi
+package com.r42914lg.catering.mvi
 
 import androidx.compose.runtime.Stable
 import kotlinx.datetime.LocalDate

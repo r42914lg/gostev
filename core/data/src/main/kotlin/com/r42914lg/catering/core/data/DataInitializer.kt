@@ -17,5 +17,6 @@ class DataInitializer {
             }
         }
         single { CalendarDataSource(get()) }
+        single { UserManager(get()) }
     }
 }

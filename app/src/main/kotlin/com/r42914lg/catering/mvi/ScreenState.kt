@@ -1,12 +1,16 @@
-package com.r42914lg.catering.ui.mvi
+package com.r42914lg.catering.mvi
 
 import kotlinx.datetime.LocalDate
 
 internal data class ScreenState(
-    val monthTitle: String,
-    val yearTitle: String,
+    val isLoading: Boolean = false,
+    val userName: String? = null,
+    val monthTitle: String = "",
+    val yearTitle: String = "",
     val days: List<CalendarDay> = emptyList(),
-)
+) {
+    fun copyWithIsLoading(isLoading: Boolean) = copy(isLoading = isLoading)
+}
 
 internal data class CalendarDay(
     val date: LocalDate,
@@ -17,6 +21,8 @@ internal data class CalendarDay(
 )
 
 internal data class EventDot(
-    val isApplied: Boolean,
+    val status: Status,
     val eventId: Long,
-)
+) {
+    enum class Status { NOT_REGISTERED, APPLIED, CONFIRMED }
+}

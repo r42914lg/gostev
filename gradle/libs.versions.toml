@@ -18,6 +18,7 @@ activityCompose = "1.13.0"
 composeBom = "2026.08.00"
 kotlinxSerializationVersion = "1.11.0"
 kotlinxCoroutinesCore = "1.11.0"
+androidxComposeMaterialIconsExtended = "1.7.8"
 koinVersion = "4.2.2"
 coreSplashscreen = "1.2.0"
 supabase = "3.8.0"
@@ -51,8 +52,10 @@ kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-s
 
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koinVersion" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koinVersion" }
+koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koinVersion" }
 
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "androidxComposeMaterialIconsExtended" }
 
 supabase-bom = { group = "io.github.jan-tennert.supabase", name = "bom", version.ref = "supabase" }
 supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt" }

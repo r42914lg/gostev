@@ -1,15 +1,16 @@
 package com.r42914lg.catering
 
-import com.r42914lg.catering.ui.mvi.MainStateHolder
-import com.r42914lg.catering.ui.mvi.MainViewModel
+import com.r42914lg.catering.mvi.MainViewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 class AppInitializer {
     val module = module {
         single<CoreApp> { CateringApp() }
-        factory<MainStateHolder> {
+        viewModel {
             MainViewModel(
-                get(),
+                calendarDataSource = get(),
+                userManager = get(),
             )
         }
     }

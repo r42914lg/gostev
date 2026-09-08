@@ -13,11 +13,11 @@ internal class PreferencesClientImpl(
 ) : PreferencesClient {
     private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-    override fun isUpgradePending(): Flow<Boolean> = context.dataStore.data.map { preferences ->
+    override fun isUpdatePending(): Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[KEY_BLOCK_UNTIL_UPGRADED] ?: false
     }
 
-    override suspend fun setUpgradePending(forceUpgrade: Boolean) {
+    override suspend fun setUpdatePending(forceUpgrade: Boolean) {
         context.dataStore.updateData {
             it.toMutablePreferences().also { preferences ->
                 preferences[KEY_BLOCK_UNTIL_UPGRADED] = forceUpgrade

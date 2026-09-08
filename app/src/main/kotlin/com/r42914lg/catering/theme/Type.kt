@@ -1,4 +1,4 @@
-package com.r42914lg.catering.ui.theme
+package com.r42914lg.catering.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
