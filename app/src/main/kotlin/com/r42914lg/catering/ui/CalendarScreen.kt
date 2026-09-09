@@ -15,7 +15,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +36,6 @@ import kotlinx.datetime.Month
 import kotlinx.datetime.plus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -49,7 +47,7 @@ internal fun CalendarScreen(
 ) {
     val state by stateHolder.screenState.collectAsState()
     val sheetState = rememberModalBottomSheetState()
-    var showBottomSheet by remember { mutableStateOf(false) }
+    var showBottomSheetForDay: LocalDate? by remember { mutableStateOf(null) }
     var selectedDayEvents by remember { mutableStateOf<List<CalendarEvent>>(emptyList()) }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -124,7 +122,7 @@ internal fun CalendarScreen(
                             val day = state.days.find { it.date == date }
                             if (day != null && day.events.isNotEmpty()) {
                                 selectedDayEvents = day.events
-                                showBottomSheet = true
+                                showBottomSheetForDay = day.date
                             }
                             stateHolder.onScreenAction(ScreenEvent.DateSelected(date))
                         }
@@ -135,18 +133,19 @@ internal fun CalendarScreen(
             }
         }
 
-        if (showBottomSheet) {
+        showBottomSheetForDay?.let {
             ModalBottomSheet(
-                onDismissRequest = { showBottomSheet = false },
+                onDismissRequest = { showBottomSheetForDay = null },
                 sheetState = sheetState,
                 containerColor = Paper,
                 dragHandle = null
             ) {
                 DetailsContent(
+                    day = it,
                     events = selectedDayEvents,
                     assignments = state.assignments,
                     onAuthorizeClick = {
-                        showBottomSheet = false
+                        showBottomSheetForDay = null
                         scope.launch { drawerState.open() }
                     }
                 )

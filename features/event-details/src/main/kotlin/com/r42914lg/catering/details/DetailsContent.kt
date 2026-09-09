@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.core.data.model.EventAssignment
+import kotlinx.datetime.LocalDate
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -36,11 +37,12 @@ private val Muted = Color(0xFF8A857C)
 
 @Composable
 fun DetailsContent(
+    day: LocalDate,
     events: List<CalendarEvent>,
     assignments: List<EventAssignment>,
     onAuthorizeClick: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: DetailsViewModel = koinViewModel { parametersOf(events, assignments) }
+    viewModel: DetailsViewModel = koinViewModel(key = day.toString()) { parametersOf(events, assignments) }
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -51,7 +53,6 @@ fun DetailsContent(
             .padding(horizontal = 20.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Handle
         Box(
             modifier = Modifier
                 .width(36.dp)
@@ -59,10 +60,7 @@ fun DetailsContent(
                 .clip(CircleShape)
                 .background(Hairline)
         )
-        
         Spacer(modifier = Modifier.height(18.dp))
-
-        // Day Label
         state.event?.let { e ->
             Text(
                 text = "${e.date.dayOfWeek.name}, ${e.date.month.name} ${e.date.dayOfMonth}".uppercase(),
@@ -72,10 +70,7 @@ fun DetailsContent(
                 letterSpacing = 0.04.sp
             )
         }
-
         Spacer(modifier = Modifier.height(2.dp))
-
-        // Navigation and Title
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
