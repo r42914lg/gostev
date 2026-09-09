@@ -5,12 +5,17 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import com.r42914lg.catering.mvi.*
 import com.r42914lg.catering.details.DetailsContent
+import com.r42914lg.catering.auth.AuthContent
 import com.r42914lg.catering.theme.*
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import kotlinx.datetime.DatePeriod
@@ -31,81 +37,120 @@ import kotlinx.datetime.Month
 import kotlinx.datetime.plus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CalendarScreen(
+    modifier: Modifier = Modifier,
     stateHolder: MainStateHolder = koinViewModel<MainViewModel>(),
-    modifier: Modifier = Modifier
 ) {
     val state by stateHolder.screenState.collectAsState()
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     var selectedDayEvents by remember { mutableStateOf<List<CalendarEvent>>(emptyList()) }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = Paper,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Calendar", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Ink) },
-                navigationIcon = {
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Ink)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Paper
-                )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
-            MonthSelector(
-                monthTitle = state.monthTitle,
-                yearTitle = state.yearTitle,
-                onPrevClick = { stateHolder.onScreenAction(ScreenEvent.PreviousMonthClicked) },
-                onNextClick = { stateHolder.onScreenAction(ScreenEvent.NextMonthClicked) }
-            )
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-            WeekdayHeader()
-
-            CalendarGrid(
-                days = state.days,
-                onDateSelected = { date ->
-                    val day = state.days.find { it.date == date }
-                    if (day != null && day.events.isNotEmpty()) {
-                        selectedDayEvents = day.events
-                        showBottomSheet = true
-                    }
-                    stateHolder.onScreenAction(ScreenEvent.DateSelected(date))
+    LaunchedEffect(stateHolder.effects) {
+        stateHolder.effects.collect { effect ->
+            when (effect) {
+                is MainEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message)
                 }
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
+            }
         }
     }
 
-    if (showBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showBottomSheet = false },
-            sheetState = sheetState,
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerContainerColor = Paper,
+                drawerShape = RoundedCornerShape(0.dp),
+                modifier = Modifier.width(284.dp)
+            ) {
+                AuthContent()
+            }
+        },
+        gesturesEnabled = true
+    ) {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
             containerColor = Paper,
-            dragHandle = null
-        ) {
-            DetailsContent(
-                events = selectedDayEvents,
-                assignments = state.assignments,
-                onAuthorizeClick = {
-                    showBottomSheet = false
-                    // TODO: Open drawer
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text("Calendar", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Ink) },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Ink)
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Paper
+                    )
+                )
+            }
+        ) { paddingValues ->
+            PullToRefreshBox(
+                isRefreshing = state.isLoading,
+                onRefresh = { stateHolder.onScreenAction(ScreenEvent.RefreshRequested) },
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    MonthSelector(
+                        monthTitle = state.monthTitle,
+                        yearTitle = state.yearTitle,
+                        onPrevClick = { stateHolder.onScreenAction(ScreenEvent.PreviousMonthClicked) },
+                        onNextClick = { stateHolder.onScreenAction(ScreenEvent.NextMonthClicked) }
+                    )
+
+                    WeekdayHeader()
+
+                    CalendarGrid(
+                        days = state.days,
+                        onDateSelected = { date ->
+                            val day = state.days.find { it.date == date }
+                            if (day != null && day.events.isNotEmpty()) {
+                                selectedDayEvents = day.events
+                                showBottomSheet = true
+                            }
+                            stateHolder.onScreenAction(ScreenEvent.DateSelected(date))
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
                 }
-            )
+            }
+        }
+
+        if (showBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showBottomSheet = false },
+                sheetState = sheetState,
+                containerColor = Paper,
+                dragHandle = null
+            ) {
+                DetailsContent(
+                    events = selectedDayEvents,
+                    assignments = state.assignments,
+                    onAuthorizeClick = {
+                        showBottomSheet = false
+                        scope.launch { drawerState.open() }
+                    }
+                )
+            }
         }
     }
 }
@@ -323,6 +368,7 @@ private fun CalendarScreenPreview() {
     val mockStateHolder = remember {
         object : MainStateHolder {
             override val screenState = MutableStateFlow(mockState).asStateFlow()
+            override val effects = kotlinx.coroutines.flow.emptyFlow<MainEffect>()
             override fun onScreenAction(event: ScreenEvent) {}
         }
     }

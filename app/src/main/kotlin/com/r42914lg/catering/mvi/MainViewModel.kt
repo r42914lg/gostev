@@ -30,6 +30,7 @@ import kotlin.time.Duration.Companion.seconds
 @Stable
 internal interface MainStateHolder {
     val screenState: StateFlow<ScreenState>
+    val effects: Flow<MainEffect>
     fun onScreenAction(event: ScreenEvent)
 }
 
@@ -55,6 +56,8 @@ internal class MainViewModel(
     }
 
     private val actions = MutableSharedFlow<Action>()
+    private val _effects = MutableSharedFlow<MainEffect>()
+    override val effects: Flow<MainEffect> = _effects
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override val screenState: StateFlow<ScreenState> = actions
@@ -72,6 +75,7 @@ internal class MainViewModel(
                 is ScreenEvent.DateSelected -> actions.emit(Action.DateSelected(event.date))
                 ScreenEvent.NextMonthClicked -> actions.emit(Action.NextMonth)
                 ScreenEvent.PreviousMonthClicked -> actions.emit(Action.PrevMonth)
+                ScreenEvent.RefreshRequested -> actions.emit(Action.Refresh)
             }
         }
     }
@@ -80,7 +84,10 @@ internal class MainViewModel(
         when (action) {
             Action.Load, Action.Refresh -> {
                 emit(screenState.value.copyWithIsLoading(true))
-                loadData()
+                val success = loadData()
+                if (!success) {
+                    _effects.emit(MainEffect.ShowSnackbar("Cannot load calendar data"))
+                }
                 emit(getUpdatedState())
             }
             is Action.DateSelected -> {
@@ -98,11 +105,14 @@ internal class MainViewModel(
         }
     }
 
-    private fun loadData() {
-        viewModelScope.launch {
-            allEvents = calendarDataSource.fetchCalendarEvents()
-            myAssignments = calendarDataSource.fetchAssignments()
-        }
+    private suspend fun loadData(): Boolean {
+        val eventsResult = calendarDataSource.fetchCalendarEvents()
+        val assignmentsResult = calendarDataSource.fetchAssignments()
+        
+        allEvents = eventsResult.getOrDefault(emptyList())
+        myAssignments = assignmentsResult.getOrDefault(emptyList())
+
+        return eventsResult.isSuccess && assignmentsResult.isSuccess
     }
 
     private fun getUpdatedState(): ScreenState {

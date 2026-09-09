@@ -135,7 +135,6 @@ fun DetailsContent(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Status Pill (Optional based on design)
         if (state.isAuthorized) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(

@@ -8,4 +8,5 @@ internal sealed interface ScreenEvent {
     data object PreviousMonthClicked : ScreenEvent
     data object NextMonthClicked : ScreenEvent
     data class DateSelected(val date: LocalDate) : ScreenEvent
+    data object RefreshRequested : ScreenEvent
 }

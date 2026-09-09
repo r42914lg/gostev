@@ -2,6 +2,7 @@ package com.r42914lg.catering
 
 import android.app.Application
 import android.content.Context
+import com.r42914lg.catering.auth.AuthInitializer
 import com.r42914lg.catering.core.data.DataInitializer
 import com.r42914lg.catering.core.prefs.PrefsInitializer
 import com.r42914lg.catering.details.DetailsInitializer
@@ -29,6 +30,7 @@ class CateringApp : Application(), CoreApp {
                     RemoteConfigInitializer().module,
                     DataInitializer().module,
                     DetailsInitializer().module,
+                    AuthInitializer().module,
                     AppInitializer().module
                 )
             )

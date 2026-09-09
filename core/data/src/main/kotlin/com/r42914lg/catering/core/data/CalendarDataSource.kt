@@ -10,14 +10,25 @@ import io.github.jan.supabase.postgrest.postgrest
 class CalendarDataSource(
     private val supabaseClient: SupabaseClient,
 ) {
-    suspend fun fetchCalendarEvents(): List<CalendarEvent> =
-        supabaseClient.postgrest.from("calendar_events").select().decodeList()
+    suspend fun fetchCalendarEvents(): Result<List<CalendarEvent>> = try {
+        Result.success(supabaseClient.postgrest.from("calendar_events").select().decodeList())
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
 
-    suspend fun fetchAssignments(): List<EventAssignment> {
-        val uid = supabaseClient.auth.currentUserOrNull()?.id ?: return emptyList()
-        return supabaseClient.from("event_assignments")
-            .select { filter { eq("userId", uid) } }
-            .decodeList()
+    suspend fun fetchAssignments(): Result<List<EventAssignment>> = try {
+        val uid = supabaseClient.auth.currentUserOrNull()?.id
+        if (uid == null) {
+            Result.success(emptyList())
+        } else {
+            Result.success(
+                supabaseClient.from("event_assignments")
+                    .select { filter { eq("user_id", uid) } }
+                    .decodeList()
+            )
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 
     suspend fun applyForEvent(userId: String, eventId: Long): Boolean = try {
@@ -32,8 +43,8 @@ class CalendarDataSource(
     suspend fun cancelEventAssignment(userId: String, eventId: Long): Boolean = try {
         supabaseClient.from("event_assignments").delete {
             filter {
-                eq("userId", userId)
-                eq("eventId", eventId)
+                eq("user_id", userId)
+                eq("event_id", eventId)
             }
         }
         true

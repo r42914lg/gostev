@@ -65,7 +65,7 @@ class DetailsViewModel(
 
     private fun loadAssignments() {
         viewModelScope.launch {
-            _assignments.value = calendarDataSource.fetchAssignments()
+            _assignments.value = calendarDataSource.fetchAssignments().getOrDefault(emptyList())
         }
     }
 
