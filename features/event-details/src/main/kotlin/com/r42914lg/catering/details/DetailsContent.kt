@@ -8,9 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,7 +23,6 @@ import kotlinx.datetime.LocalDate
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-// Design Colors
 private val Paper = Color(0xFFFAF9F6)
 private val Ink = Color(0xFF171512)
 private val Pine = Color(0xFF2E4B43)
@@ -41,10 +38,21 @@ fun DetailsContent(
     events: List<CalendarEvent>,
     assignments: List<EventAssignment>,
     onAuthorizeClick: () -> Unit,
+    onStatusChanged: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DetailsViewModel = koinViewModel(key = day.toString()) { parametersOf(events, assignments) }
 ) {
     val state by viewModel.state.collectAsState()
+
+    LaunchedEffect(viewModel.effects) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is DetailsEffect.RegistrationStatusChanged -> {
+                    onStatusChanged()
+                }
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -156,7 +164,6 @@ fun DetailsContent(
         HorizontalDivider(color = Hairline)
         Spacer(modifier = Modifier.height(18.dp))
 
-        // Action Button
         Button(
             onClick = {
                 if (!state.isAuthorized) {

@@ -8,9 +8,12 @@ import com.r42914lg.catering.core.data.model.EventAssignment
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -27,6 +30,9 @@ class DetailsViewModel(
     private val _currentIndex = MutableStateFlow(0)
     private val _isLoading = MutableStateFlow(false)
     private val _assignments = MutableStateFlow(initialAssignments)
+
+    private val _effects = MutableSharedFlow<DetailsEffect>()
+    val effects: Flow<DetailsEffect> = _effects.asSharedFlow()
 
     val state: StateFlow<DetailsState> = combine(
         _events,
@@ -85,7 +91,10 @@ class DetailsViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             if (calendarDataSource.applyForEvent(userId, eventId)) {
+                _effects.emit(DetailsEffect.RegistrationStatusChanged("Application successful"))
                 loadAssignments()
+            } else {
+                _effects.emit(DetailsEffect.RegistrationStatusChanged("Application failed"))
             }
             _isLoading.value = false
         }
@@ -98,7 +107,10 @@ class DetailsViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             if (calendarDataSource.cancelEventAssignment(userId, eventId)) {
+                _effects.emit(DetailsEffect.RegistrationStatusChanged("Registration canceled"))
                 loadAssignments()
+            } else {
+                _effects.emit(DetailsEffect.RegistrationStatusChanged("Cancellation failed"))
             }
             _isLoading.value = false
         }

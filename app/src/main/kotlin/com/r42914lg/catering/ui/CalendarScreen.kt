@@ -53,6 +53,7 @@ internal fun CalendarScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    var statusChanged by remember { mutableStateOf(false) }
 
     LaunchedEffect(stateHolder.effects) {
         stateHolder.effects.collect { effect ->
@@ -135,7 +136,13 @@ internal fun CalendarScreen(
 
         showBottomSheetForDay?.let {
             ModalBottomSheet(
-                onDismissRequest = { showBottomSheetForDay = null },
+                onDismissRequest = {
+                    if (statusChanged) {
+                        statusChanged = false
+                        stateHolder.onScreenAction(ScreenEvent.RefreshRequested)
+                    }
+                    showBottomSheetForDay = null
+                },
                 sheetState = sheetState,
                 containerColor = Paper,
                 dragHandle = null
@@ -147,6 +154,9 @@ internal fun CalendarScreen(
                     onAuthorizeClick = {
                         showBottomSheetForDay = null
                         scope.launch { drawerState.open() }
+                    },
+                    onStatusChanged = {
+                        statusChanged = true
                     }
                 )
             }
@@ -320,7 +330,11 @@ private fun EventDots(dots: List<EventDot>) {
         val displayedDots = dots.take(maxDots)
         
         displayedDots.forEach { dot ->
-            val color = if (dot.status == EventDot.Status.CONFIRMED) Pine else Brick
+            val color = when (dot.status) {
+                EventDot.Status.CONFIRMED -> Pine
+                EventDot.Status.NOT_REGISTERED -> Brick
+                EventDot.Status.APPLIED -> Bronze
+            }
             Box(
                 modifier = Modifier
                     .size(4.dp)
