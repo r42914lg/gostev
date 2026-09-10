@@ -10,21 +10,7 @@ import kotlinx.coroutines.flow.map
 class UserManager(
     private val supabaseClient: SupabaseClient
 ) {
-    val userName = supabaseClient.auth.sessionStatus.map { status ->
-        if (status is SessionStatus.Authenticated) {
-            fetchMyName()
-        } else {
-            null
-        }
-    }
-
-    private suspend fun fetchMyName(): String? {
-        val uid = supabaseClient.auth.currentUserOrNull()?.id ?: return null
-
-        val user = supabaseClient.from("users")
-            .select { filter { eq("id", uid) } }
-            .decodeSingleOrNull<User>()
-
-        return user?.name
+    val isAuthenticated = supabaseClient.auth.sessionStatus.map { status ->
+        status is SessionStatus.Authenticated
     }
 }

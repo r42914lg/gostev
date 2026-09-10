@@ -13,8 +13,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -60,14 +65,25 @@ internal class MainViewModel(
     override val effects: Flow<MainEffect> = _effects
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val screenState: StateFlow<ScreenState> = actions
-        .onStart { emit(Action.Load) }
-        .flatMapLatest { action -> reduce(action) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5.seconds),
-            initialValue = ScreenState(),
+    override val screenState: StateFlow<ScreenState> = combine(
+        merge(
+            actions,
+            userManager.isAuthenticated
+                .distinctUntilChanged()
+                .drop(1)
+                .map { Action.Refresh }
         )
+        .onStart { emit(Action.Load) }
+        .flatMapLatest { action -> reduce(action) },
+        calendarDataSource.assignments
+    ) { state, assignments ->
+        myAssignments = assignments
+        getUpdatedState().copy(isLoading = state.isLoading)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5.seconds),
+        initialValue = ScreenState(),
+    )
 
     override fun onScreenAction(event: ScreenEvent) {
         viewModelScope.launch {
@@ -83,24 +99,24 @@ internal class MainViewModel(
     private fun reduce(action: Action): Flow<ScreenState> = flow {
         when (action) {
             Action.Load, Action.Refresh -> {
-                emit(screenState.value.copyWithIsLoading(true))
+                emit(ScreenState(isLoading = true))
                 val success = loadData()
                 if (!success) {
                     _effects.emit(MainEffect.ShowSnackbar("Cannot load calendar data"))
                 }
-                emit(getUpdatedState())
+                emit(ScreenState(isLoading = false))
             }
             is Action.DateSelected -> {
                 selectedDate = action.date
-                emit(getUpdatedState())
+                emit(ScreenState(isLoading = false))
             }
             Action.NextMonth -> {
                 currentMonth = currentMonth.plus(DatePeriod(months = 1))
-                emit(getUpdatedState())
+                emit(ScreenState(isLoading = false))
             }
             Action.PrevMonth -> {
                 currentMonth = currentMonth.minus(DatePeriod(months = 1))
-                emit(getUpdatedState())
+                emit(ScreenState(isLoading = false))
             }
         }
     }
@@ -110,7 +126,6 @@ internal class MainViewModel(
         val assignmentsResult = calendarDataSource.fetchAssignments()
         
         allEvents = eventsResult.getOrDefault(emptyList())
-        myAssignments = assignmentsResult.getOrDefault(emptyList())
 
         return eventsResult.isSuccess && assignmentsResult.isSuccess
     }

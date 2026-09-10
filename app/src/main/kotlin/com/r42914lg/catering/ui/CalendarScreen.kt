@@ -150,7 +150,6 @@ internal fun CalendarScreen(
                 DetailsContent(
                     day = it,
                     events = selectedDayEvents,
-                    assignments = state.assignments,
                     onAuthorizeClick = {
                         showBottomSheetForDay = null
                         scope.launch { drawerState.open() }

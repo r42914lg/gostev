@@ -8,7 +8,6 @@ class DetailsInitializer {
         viewModel { params ->
             DetailsViewModel(
                 initialEvents = params.get(),
-                initialAssignments = params.get(),
                 calendarDataSource = get(),
                 supabaseClient = get()
             )

@@ -36,11 +36,10 @@ private val Muted = Color(0xFF8A857C)
 fun DetailsContent(
     day: LocalDate,
     events: List<CalendarEvent>,
-    assignments: List<EventAssignment>,
     onAuthorizeClick: () -> Unit,
     onStatusChanged: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: DetailsViewModel = koinViewModel(key = day.toString()) { parametersOf(events, assignments) }
+    viewModel: DetailsViewModel = koinViewModel(key = day.toString()) { parametersOf(events) }
 ) {
     val state by viewModel.state.collectAsState()
 

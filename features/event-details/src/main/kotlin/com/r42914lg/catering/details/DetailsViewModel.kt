@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 
 class DetailsViewModel(
     initialEvents: List<CalendarEvent>,
-    initialAssignments: List<EventAssignment>,
     private val calendarDataSource: CalendarDataSource,
     private val supabaseClient: SupabaseClient,
 ) : ViewModel() {
@@ -29,7 +28,6 @@ class DetailsViewModel(
     private val _events = MutableStateFlow(initialEvents)
     private val _currentIndex = MutableStateFlow(0)
     private val _isLoading = MutableStateFlow(false)
-    private val _assignments = MutableStateFlow(initialAssignments)
 
     private val _effects = MutableSharedFlow<DetailsEffect>()
     val effects: Flow<DetailsEffect> = _effects.asSharedFlow()
@@ -37,7 +35,7 @@ class DetailsViewModel(
     val state: StateFlow<DetailsState> = combine(
         _events,
         _currentIndex,
-        _assignments,
+        calendarDataSource.assignments,
         supabaseClient.auth.sessionStatus,
         _isLoading
     ) { events, index, assignments, authStatus, isLoading ->
@@ -65,16 +63,6 @@ class DetailsViewModel(
         initialValue = DetailsState()
     )
 
-    init {
-        loadAssignments()
-    }
-
-    private fun loadAssignments() {
-        viewModelScope.launch {
-            _assignments.value = calendarDataSource.fetchAssignments().getOrDefault(emptyList())
-        }
-    }
-
     fun onAction(action: DetailsAction) {
         when (action) {
             DetailsAction.ApplyClicked -> applyForEvent()
@@ -92,7 +80,6 @@ class DetailsViewModel(
             _isLoading.value = true
             if (calendarDataSource.applyForEvent(userId, eventId)) {
                 _effects.emit(DetailsEffect.RegistrationStatusChanged("Application successful"))
-                loadAssignments()
             } else {
                 _effects.emit(DetailsEffect.RegistrationStatusChanged("Application failed"))
             }
@@ -108,7 +95,6 @@ class DetailsViewModel(
             _isLoading.value = true
             if (calendarDataSource.cancelEventAssignment(userId, eventId)) {
                 _effects.emit(DetailsEffect.RegistrationStatusChanged("Registration canceled"))
-                loadAssignments()
             } else {
                 _effects.emit(DetailsEffect.RegistrationStatusChanged("Cancellation failed"))
             }

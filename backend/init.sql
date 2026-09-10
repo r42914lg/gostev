@@ -44,16 +44,32 @@ create table event_assignments (
 
 
 -- ============================================
--- 4. ENABLE ROW LEVEL SECURITY
+-- 4. REMOTE_CONFIG TABLE
+-- ============================================
+create table remote_config (
+  key text primary key,
+  value text not null
+);
+
+
+-- ============================================
+-- 5. ENABLE ROW LEVEL SECURITY
 -- ============================================
 alter table users enable row level security;
 alter table calendar_events enable row level security;
 alter table event_assignments enable row level security;
+alter table remote_config enable row level security;
 
 
 -- ============================================
--- 5. POLICIES
+-- 6. POLICIES
 -- ============================================
+
+-- remote_config: everyone can read, including logged-out (anon) users
+create policy "read all config"
+on remote_config for select
+to anon, authenticated
+using (true);
 
 -- calendar_events: everyone can read, including logged-out (anon) users
 create policy "read all events"
