@@ -16,8 +16,15 @@ internal class SupabaseRemoteConfigIntegration(
     override val priority: Int = 1
 
     private val configMap = ConcurrentHashMap<String, String>()
+    private var lastFetchTime: Long = 0
+    private val cacheTtlMs = 60 * 60 * 1000
 
     override suspend fun fetch(appContext: Context) {
+        val currentTime = System.currentTimeMillis()
+        if (isInitialized && (currentTime - lastFetchTime < cacheTtlMs)) {
+            return
+        }
+
         try {
             val results = supabaseClient.from("remote_config")
                 .select()
@@ -28,6 +35,7 @@ internal class SupabaseRemoteConfigIntegration(
                 configMap[item.key] = item.value
             }
             isInitialized = true
+            lastFetchTime = currentTime
         } catch (_: Exception) {
             /* no-op */
         }
