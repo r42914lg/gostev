@@ -1,5 +1,6 @@
 package com.r42914lg.catering.ui
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,10 +21,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.tooling.preview.Preview
 import com.r42914lg.catering.mvi.*
 import com.r42914lg.catering.details.DetailsContent
@@ -54,12 +57,17 @@ internal fun CalendarScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var statusChanged by remember { mutableStateOf(false) }
+    var showForceUpdateModal by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(stateHolder.effects) {
         stateHolder.effects.collect { effect ->
             when (effect) {
                 is MainEffect.ShowSnackbar -> {
                     snackbarHostState.showSnackbar(effect.message)
+                }
+                MainEffect.ForceUpdate -> {
+                    showForceUpdateModal = true
                 }
             }
         }
@@ -160,6 +168,20 @@ internal fun CalendarScreen(
                 )
             }
         }
+    }
+
+    if (showForceUpdateModal) {
+        AlertDialog(
+            onDismissRequest = { /* no-op - blocking modal */ },
+            confirmButton = {
+                Button(onClick = { (context as? Activity)?.finish() }) {
+                    Text("OK")
+                }
+            },
+            title = { Text("Update Required") },
+            text = { Text("Update to latest version. Application will be closed") },
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+        )
     }
 }
 

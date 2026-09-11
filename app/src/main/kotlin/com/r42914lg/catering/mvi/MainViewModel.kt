@@ -3,10 +3,13 @@ package com.r42914lg.catering.mvi
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.r42914lg.catering.BuildConfig
 import com.r42914lg.catering.core.data.CalendarDataSource
 import com.r42914lg.catering.core.data.UserManager
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.core.data.model.EventAssignment
+import com.r42914lg.catering.remoteconfig.RemoteConfig
+import com.r42914lg.catering.remoteconfig.RemoteConfigKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -42,6 +45,7 @@ internal interface MainStateHolder {
 internal class MainViewModel(
     private val calendarDataSource: CalendarDataSource,
     private val userManager: UserManager,
+    private val remoteConfig: RemoteConfig,
 ) : ViewModel(), MainStateHolder {
 
     private val timeZone = TimeZone.currentSystemDefault()
@@ -73,7 +77,10 @@ internal class MainViewModel(
                 .drop(1)
                 .map { Action.Refresh }
         )
-        .onStart { emit(Action.Load) }
+        .onStart { 
+            checkForceUpdate()
+            emit(Action.Load) 
+        }
         .flatMapLatest { action -> reduce(action) },
         calendarDataSource.assignments
     ) { state, assignments ->
@@ -84,6 +91,15 @@ internal class MainViewModel(
         started = SharingStarted.WhileSubscribed(5.seconds),
         initialValue = ScreenState(),
     )
+
+    private fun checkForceUpdate() {
+        val minVersion = remoteConfig.getString(RemoteConfigKey.RC_MIN_VERSION).toIntOrNull() ?: 0
+        if (minVersion > BuildConfig.VERSION_CODE) {
+            viewModelScope.launch {
+                _effects.emit(MainEffect.ForceUpdate)
+            }
+        }
+    }
 
     override fun onScreenAction(event: ScreenEvent) {
         viewModelScope.launch {

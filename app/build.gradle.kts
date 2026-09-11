@@ -6,6 +6,10 @@ android {
     namespace = "com.r42914lg.catering"
     compileSdk = 37
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.r42914lg.catering"
         minSdk = 26

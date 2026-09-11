@@ -11,6 +11,7 @@ class AppInitializer {
             MainViewModel(
                 calendarDataSource = get(),
                 userManager = get(),
+                remoteConfig = get(),
             )
         }
     }
