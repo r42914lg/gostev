@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,9 +22,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -41,6 +46,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +60,7 @@ internal fun CalendarScreen(
     var selectedDayEvents by remember { mutableStateOf<List<CalendarEvent>>(emptyList()) }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val rightDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var statusChanged by remember { mutableStateOf(false) }
@@ -73,99 +80,143 @@ internal fun CalendarScreen(
         }
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = Paper,
-                drawerShape = RoundedCornerShape(0.dp),
-                modifier = Modifier.width(284.dp)
-            ) {
-                AuthContent()
-            }
-        },
-        gesturesEnabled = true
-    ) {
-        Scaffold(
-            modifier = modifier.fillMaxSize(),
-            containerColor = Paper,
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("Calendar", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Ink) },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Ink)
-                        }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Paper
-                    )
-                )
-            }
-        ) { paddingValues ->
-            PullToRefreshBox(
-                isRefreshing = state.isLoading,
-                onRefresh = { stateHolder.onScreenAction(ScreenEvent.RefreshRequested) },
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    MonthSelector(
-                        monthTitle = state.monthTitle,
-                        yearTitle = state.yearTitle,
-                        onPrevClick = { stateHolder.onScreenAction(ScreenEvent.PreviousMonthClicked) },
-                        onNextClick = { stateHolder.onScreenAction(ScreenEvent.NextMonthClicked) }
-                    )
-
-                    WeekdayHeader()
-
-                    CalendarGrid(
-                        days = state.days,
-                        onDateSelected = { date ->
-                            val day = state.days.find { it.date == date }
-                            if (day != null && day.events.isNotEmpty()) {
-                                selectedDayEvents = day.events
-                                showBottomSheetForDay = day.date
-                            }
-                            stateHolder.onScreenAction(ScreenEvent.DateSelected(date))
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        ModalNavigationDrawer(
+            drawerState = rightDrawerState,
+            drawerContent = {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    ModalDrawerSheet(
+                        drawerContainerColor = Paper,
+                        drawerShape = RoundedCornerShape(0.dp),
+                        modifier = Modifier.width(284.dp)
+                    ) {
+                        Text("Debug panel")
+                    }
                 }
-            }
-        }
-
-        showBottomSheetForDay?.let {
-            ModalBottomSheet(
-                onDismissRequest = {
-                    if (statusChanged) {
-                        statusChanged = false
-                        stateHolder.onScreenAction(ScreenEvent.RefreshRequested)
-                    }
-                    showBottomSheetForDay = null
-                },
-                sheetState = sheetState,
-                containerColor = Paper,
-                dragHandle = null
-            ) {
-                DetailsContent(
-                    day = it,
-                    events = selectedDayEvents,
-                    onAuthorizeClick = {
-                        showBottomSheetForDay = null
-                        scope.launch { drawerState.open() }
+            },
+            gesturesEnabled = true
+        ) {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                ModalNavigationDrawer(
+                    drawerState = drawerState,
+                    drawerContent = {
+                        ModalDrawerSheet(
+                            drawerContainerColor = Paper,
+                            drawerShape = RoundedCornerShape(0.dp),
+                            modifier = Modifier.width(284.dp)
+                        ) {
+                            AuthContent()
+                        }
                     },
-                    onStatusChanged = {
-                        statusChanged = true
+                    gesturesEnabled = true
+                ) {
+                    Scaffold(
+                        modifier = modifier.fillMaxSize(),
+                        containerColor = Paper,
+                        snackbarHost = { SnackbarHost(snackbarHostState) },
+                        topBar = {
+                            CenterAlignedTopAppBar(
+                                title = { Text("Calendar", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Ink) },
+                                navigationIcon = {
+                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Ink)
+                                    }
+                                },
+                                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                    containerColor = Paper
+                                )
+                            )
+                        }
+                    ) { paddingValues ->
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            PullToRefreshBox(
+                                isRefreshing = state.isLoading,
+                                onRefresh = { stateHolder.onScreenAction(ScreenEvent.RefreshRequested) },
+                                modifier = Modifier
+                                    .padding(paddingValues)
+                                    .fillMaxSize()
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    MonthSelector(
+                                        monthTitle = state.monthTitle,
+                                        yearTitle = state.yearTitle,
+                                        onPrevClick = { stateHolder.onScreenAction(ScreenEvent.PreviousMonthClicked) },
+                                        onNextClick = { stateHolder.onScreenAction(ScreenEvent.NextMonthClicked) }
+                                    )
+
+                                    WeekdayHeader()
+
+                                    CalendarGrid(
+                                        days = state.days,
+                                        onDateSelected = { date ->
+                                            val day = state.days.find { it.date == date }
+                                            if (day != null && day.events.isNotEmpty()) {
+                                                selectedDayEvents = day.events
+                                                showBottomSheetForDay = day.date
+                                            }
+                                            stateHolder.onScreenAction(ScreenEvent.DateSelected(date))
+                                        }
+                                    )
+
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color.Cyan)
+                                        .align(Alignment.TopEnd)
+                                        .width(15.dp)
+                                        .height(50.dp)
+                                        .pointerInput(Unit) {
+                                            detectTapGestures(
+                                                onPress = {
+                                                    val job = scope.launch {
+                                                        delay(5000)
+                                                        rightDrawerState.open()
+                                                    }
+                                                    try {
+                                                        awaitRelease()
+                                                    } finally {
+                                                        job.cancel()
+                                                    }
+                                                }
+                                            )
+                                        }
+                                )
+                            }
+                        }
                     }
-                )
+
+                    showBottomSheetForDay?.let {
+                        ModalBottomSheet(
+                            onDismissRequest = {
+                                if (statusChanged) {
+                                    statusChanged = false
+                                    stateHolder.onScreenAction(ScreenEvent.RefreshRequested)
+                                }
+                                showBottomSheetForDay = null
+                            },
+                            sheetState = sheetState,
+                            containerColor = Paper,
+                            dragHandle = null
+                        ) {
+                        DetailsContent(
+                            day = it,
+                            events = selectedDayEvents,
+                            onAuthorizeClick = {
+                                showBottomSheetForDay = null
+                                scope.launch { drawerState.open() }
+                            },
+                            onStatusChanged = {
+                                statusChanged = true
+                            }
+                        )
+                        }
+                    }
+                }
             }
         }
     }
@@ -323,7 +374,7 @@ private fun DayCell(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = day.date.dayOfMonth.toString(),
+                text = day.date.day.toString(),
                 fontSize = 14.sp,
                 color = dayNumColor,
                 fontWeight = if (day.isToday) FontWeight.Medium else FontWeight.Normal
