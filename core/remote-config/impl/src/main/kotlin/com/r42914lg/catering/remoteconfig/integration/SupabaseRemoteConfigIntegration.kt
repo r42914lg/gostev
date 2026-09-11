@@ -45,6 +45,8 @@ internal class SupabaseRemoteConfigIntegration(
 
     override fun getString(key: String): String = configMap[key] ?: ""
 
+    override fun getAll(): Map<String, String> = configMap.toMap()
+
     @Serializable
     private data class RemoteConfigItem(
         @SerialName("key") val key: String,

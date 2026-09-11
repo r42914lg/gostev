@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -62,6 +63,7 @@ internal class MainViewModel(
         data class DateSelected(val date: LocalDate) : Action
         data object NextMonth : Action
         data object PrevMonth : Action
+        data object ForceUpdateCheck : Action
     }
 
     private val actions = MutableSharedFlow<Action>()
@@ -75,10 +77,13 @@ internal class MainViewModel(
             userManager.isAuthenticated
                 .distinctUntilChanged()
                 .drop(1)
-                .map { Action.Refresh }
+                .map { Action.Refresh },
+            remoteConfig.updates
+                .filter { it == RemoteConfigKey.RC_MIN_VERSION }
+                .map { Action.ForceUpdateCheck }
         )
         .onStart { 
-            checkForceUpdate()
+            emit(Action.ForceUpdateCheck)
             emit(Action.Load) 
         }
         .flatMapLatest { action -> reduce(action) },
@@ -114,6 +119,10 @@ internal class MainViewModel(
 
     private fun reduce(action: Action): Flow<ScreenState> = flow {
         when (action) {
+            Action.ForceUpdateCheck -> {
+                checkForceUpdate()
+                emit(screenState.value)
+            }
             Action.Load, Action.Refresh -> {
                 emit(ScreenState(isLoading = true))
                 val success = loadData()

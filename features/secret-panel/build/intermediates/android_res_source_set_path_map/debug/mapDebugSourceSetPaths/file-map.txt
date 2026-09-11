@@ -1,0 +1,9 @@
+com.r42914lg.catering.secret.secret-panel-pngs-0 /Users/leonid.gomberg/EDU/catering/features/secret-panel/build/generated/res/pngs/debug
+com.r42914lg.catering.secret.secret-panel-updated_navigation_xml-1 /Users/leonid.gomberg/EDU/catering/features/secret-panel/build/generated/updated_navigation_xml/debug
+com.r42914lg.catering.secret.secret-panel-mergeDebugResources-2 /Users/leonid.gomberg/EDU/catering/features/secret-panel/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
+com.r42914lg.catering.secret.secret-panel-mergeDebugResources-3 /Users/leonid.gomberg/EDU/catering/features/secret-panel/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
+com.r42914lg.catering.secret.secret-panel-debug-4 /Users/leonid.gomberg/EDU/catering/features/secret-panel/build/intermediates/merged_res/debug/mergeDebugResources
+com.r42914lg.catering.secret.secret-panel-debug-5 /Users/leonid.gomberg/EDU/catering/features/secret-panel/build/intermediates/packaged_res/debug/packageDebugResources
+com.r42914lg.catering.secret.secret-panel-debug-6 /Users/leonid.gomberg/EDU/catering/features/secret-panel/src/debug/res
+com.r42914lg.catering.secret.secret-panel-main-7 /Users/leonid.gomberg/EDU/catering/features/secret-panel/src/main/res
+gradleHome-0 /Users/leonid.gomberg/.gradle

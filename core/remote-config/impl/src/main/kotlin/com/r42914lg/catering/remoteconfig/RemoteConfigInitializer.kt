@@ -7,11 +7,13 @@ import org.koin.dsl.module
 
 class RemoteConfigInitializer {
     val module = module {
+        single { LocalConfigDebugOverride() }
         single<RemoteConfigIntegration> {
             SupabaseRemoteConfigIntegration(get())
         }
         single<RemoteConfig> {
             RemoteConfigImpl(
+                get(),
                 get(),
                 androidContext()
             )

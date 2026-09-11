@@ -9,4 +9,5 @@ interface RemoteConfigIntegration {
     suspend fun fetch(appContext: Context)
     fun contains(key: String): Boolean
     fun getString(key: String): String
+    fun getAll(): Map<String, String>
 }

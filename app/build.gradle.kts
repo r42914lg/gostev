@@ -40,6 +40,7 @@ dependencies {
     implementation(project(":core:prefs:impl"))
     implementation(project(":features:event-details"))
     implementation(project(":features:authorization"))
+    implementation(project(":features:secret-panel"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.core.ktx)
