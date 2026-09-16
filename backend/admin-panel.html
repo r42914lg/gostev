@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catering Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --paper: #FAF9F6; --ink: #171512; --pine: #2E4B43; --pine-light: #E7EEEC;
+            --bronze: #8A6E4B; --bronze-light: #F1EAE0; --brick: #B23A2E; --brick-light: #F7E7E4;
+            --hairline: #E5E1D8; --muted: #8A857C;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #DCDAD3; font-family: 'Inter', sans-serif; color: var(--ink); min-height: 100vh; padding: 36px 20px; }
+        .shell { max-width: 920px; margin: 0 auto; }
+        #authGate { position: fixed; inset: 0; background: #DCDAD3; display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .gate-card { background: var(--paper); border: 1px solid var(--hairline); border-radius: 14px; padding: 32px 28px; width: 100%; max-width: 320px; text-align: center; }
+        .gate-card h2 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 22px; margin: 0 0 6px; }
+        .gate-card p { font-size: 13px; color: var(--muted); margin: 0 0 18px; }
+        .gate-card input { width: 100%; text-align: center; margin-bottom: 10px; border: 1px solid var(--hairline); padding: 10px; border-radius: 8px; }
+        .gate-error { font-size: 12.5px; color: var(--brick); min-height: 16px; margin-bottom: 6px; }
+        #appShell { display: none; }
+        header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 14px; }
+        header h1 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 34px; letter-spacing: -0.01em; margin: 0; }
+        .topbar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .tabs { display: flex; gap: 4px; background: #EFEDE7; border-radius: 10px; padding: 4px; }
+        .tab { border: none; background: none; padding: 9px 16px; border-radius: 7px; font-size: 13.5px; font-weight: 500; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .tab.active { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+        .tab .count { background: var(--brick); color: #fff; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 20px; }
+        .tab.active .count { background: var(--pine); }
+        .btn { border: none; border-radius: 8px; padding: 10px 16px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: var(--pine); color: #fff; }
+        .btn-primary:hover { background: #243D37; }
+        .btn-reject { background: none; color: var(--brick); border: 1px solid #E3B7AF; }
+        .btn-delete { background: none; color: var(--brick); border: 1px solid #E3B7AF; padding: 7px 12px; font-size: 12.5px; }
+        .btn-save { background: var(--bronze); color: #fff; padding: 7px 12px; font-size: 12.5px; }
+        .btn:disabled { opacity: 0.5; cursor: default; }
+        section { display: none; margin-top: 20px; }
+        section.active { display: block; }
+        .card { background: var(--paper); border: 1px solid var(--hairline); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
+        .req-card { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+        .req-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; margin: 0 0 4px; }
+        .req-meta { font-size: 12.5px; color: var(--bronze); margin: 0; }
+        .event-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+        .event-date-chip { background: var(--pine-light); color: var(--pine); font-size: 12px; font-weight: 600; padding: 7px 10px; border-radius: 8px; text-align: center; min-width: 70px; }
+        .status-pill { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-top: 4px; display: inline-block; }
+        .status-open { background: var(--pine-light); color: var(--pine); }
+        .status-closed { background: var(--hairline); color: var(--muted); }
+        .config-key { font-size: 13px; font-weight: 600; color: var(--pine); margin: 0 0 8px; font-family: monospace; }
+        .config-value-row { display: flex; gap: 10px; align-items: flex-start; }
+        textarea { width: 100%; border: 1px solid var(--hairline); border-radius: 7px; padding: 9px 10px; font-family: monospace; font-size: 12.5px; }
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 11px 18px; border-radius: 9px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+        .add-form { background: var(--paper); border: 1px solid var(--hairline); border-radius: 12px; padding: 18px; margin-bottom: 18px; display: none; }
+        .add-form.open { display: block; }
+        .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 12px; align-items: end; }
+        label { display: block; font-size: 11.5px; font-weight: 600; color: var(--bronze); margin-bottom: 5px; }
+        input[type="text"], input[type="date"] { width: 100%; border: 1px solid var(--hairline); border-radius: 7px; padding: 9px 10px; }
+    </style>
+</head>
+<body>
+
+<div id="authGate">
+    <div class="gate-card">
+        <h2>Admin Sign In</h2>
+        <p>Enter your credentials to manage Catering.</p>
+        <input type="email" id="gateEmail" placeholder="Email" autocomplete="username">
+        <input type="password" id="gatePassword" placeholder="Password" autocomplete="current-password">
+        <div class="gate-error" id="gateError"></div>
+        <button class="btn btn-primary" id="gateSubmit" style="width:100%; justify-content: center;">Sign In</button>
+    </div>
+</div>
+
+<div class="shell" id="appShell">
+    <div class="topbar">
+        <span id="whoami" style="font-size: 12px; color: var(--muted)"></span>
+        <button class="btn" id="lockBtn" style="font-size: 12px; padding: 4px 8px;">Sign Out</button>
+    </div>
+
+    <header>
+        <div>
+            <h1>Admin Panel</h1>
+            <p style="color: var(--muted); margin: 4px 0 0;">Review requests and manage events</p>
+        </div>
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-tab="requests" id="tabRequests">
+                Requests <span class="count" id="countPending">0</span>
+            </button>
+            <button class="tab" data-tab="events" id="tabEvents">
+                Events <span class="count" id="countEvents">0</span>
+            </button>
+            <button class="tab" data-tab="config" id="tabConfig">Config</button>
+        </div>
+    </header>
+
+    <div id="noAccess" style="display:none; text-align:center; padding:40px;">
+        <h2 style="font-family:Fraunces, serif">No Access</h2>
+        <p style="color:var(--muted)">Your account doesn't have Operator or Maintainer permissions.</p>
+    </div>
+
+    <section id="section-requests" class="active">
+        <div id="requestsList"></div>
+    </section>
+
+    <section id="section-events">
+        <div style="display:flex; justify-content:space-between; margin-bottom:16px; align-items:center;">
+            <h2 style="font-family:Fraunces, serif; margin:0; font-size:20px;">All Events</h2>
+            <button class="btn btn-primary" id="toggleAddForm">+ Add Event</button>
+        </div>
+        <div class="add-form" id="addForm">
+            <div class="form-grid">
+                <div><label>Name</label><input id="fName" type="text"></div>
+                <div><label>Date</label><input id="fDate" type="date"></div>
+                <div style="display:flex; align-items:center; gap:8px; padding-bottom:10px;">
+                    <input id="fAvailable" type="checkbox" checked> <label style="margin:0">Available</label>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn" onclick="document.getElementById('addForm').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" id="saveAdd">Save Event</button>
+            </div>
+        </div>
+        <div id="eventsList"></div>
+    </section>
+
+    <section id="section-config">
+        <div id="configList"></div>
+    </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const SUPABASE_URL = "https://naycdjyrbzslperayawc.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_i4r9GEhLBpWBFdLOtyBU8Q_jImE54B4";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let myRoles = [];
+
+    async function init() {
+        const { data } = await supabaseClient.auth.getSession();
+        if (data.session) {
+            showApp(data.session);
+        } else {
+            showGate();
+        }
+    }
+
+    async function showApp(session) {
+        document.getElementById('whoami').textContent = session.user.email;
+        const { data: roles } = await supabaseClient.from('admin_roles').select('role').eq('user_id', session.user.id);
+        myRoles = roles.map(r => r.role);
+
+        if (myRoles.length === 0) {
+            document.getElementById('noAccess').style.display = 'block';
+            document.getElementById('tabs').style.display = 'none';
+        } else {
+            document.getElementById('authGate').style.display = 'none';
+            document.getElementById('appShell').style.display = 'block';
+            applyVisibility();
+        }
+    }
+
+    function applyVisibility() {
+        const isOp = myRoles.includes('operator');
+        const isMain = myRoles.includes('maintainer');
+        document.getElementById('tabRequests').style.display = isOp ? 'flex' : 'none';
+        document.getElementById('tabEvents').style.display = isOp ? 'flex' : 'none';
+        document.getElementById('tabConfig').style.display = isMain ? 'flex' : 'none';
+        if (isOp) { loadRequests(); loadEvents(); }
+        if (isMain) loadConfig();
+    }
+
+    async function loadRequests() {
+        const { data } = await supabaseClient.from('event_assignments').select('user_id, event_id, users(name), calendar_events(date, name)').eq('status', 'APPLIED');
+        document.getElementById('countPending').textContent = data.length;
+        const list = document.getElementById('requestsList');
+        list.innerHTML = data.length ? '' : '<div class="card">No pending requests</div>';
+        data.forEach(req => {
+            const card = document.createElement('div');
+            card.className = 'card req-card';
+            card.innerHTML = `<div><p class="req-title">${req.calendar_events.name}</p><p class="req-meta">${req.calendar_events.date} • Requested by ${req.users.name}</p></div>
+                <div style="display:flex; gap:8px;"><button class="btn btn-reject" onclick="handleReq('${req.user_id}', ${req.event_id}, 'reject')">Reject</button>
+                <button class="btn btn-primary" onclick="handleReq('${req.user_id}', ${req.event_id}, 'approve')">Approve</button></div>`;
+            list.appendChild(card);
+        });
+    }
+
+    async function handleReq(uid, eid, action) {
+        if (action === 'approve') await supabaseClient.from('event_assignments').update({ status: 'CONFIRMED' }).eq('user_id', uid).eq('event_id', eid);
+        else await supabaseClient.from('event_assignments').delete().eq('user_id', uid).eq('event_id', eid);
+        showToast(action === 'approve' ? 'Approved' : 'Rejected');
+        loadRequests();
+    }
+
+    async function loadEvents() {
+        const { data } = await supabaseClient.from('calendar_events').select('*').order('date', { ascending: true });
+        document.getElementById('countEvents').textContent = data.length;
+        const list = document.getElementById('eventsList');
+        list.innerHTML = '';
+        data.forEach(ev => {
+            const d = new Date(ev.date + 'T00:00:00');
+            const row = document.createElement('div');
+            row.className = 'card event-row';
+            row.innerHTML = `<div class="event-date-chip">${d.toLocaleString('en-US', {month:'short'})}<br>${d.getDate()}</div>
+                <div style="flex:1"><p style="font-weight:500; margin:0">${ev.name}</p><span class="status-pill ${ev.is_available?'status-open':'status-closed'}">${ev.is_available?'Open':'Closed'}</span></div>
+                <div style="display:flex; gap:12px; align-items:center;"><label style="font-size:12px; margin:0"><input type="checkbox" ${ev.is_available?'checked':''} onchange="toggleAvail(${ev.id}, this.checked)"> Available</label>
+                <button class="btn btn-delete" onclick="deleteEv(${ev.id})">Delete</button></div>`;
+            list.appendChild(row);
+        });
+    }
+
+    async function toggleAvail(id, val) { await supabaseClient.from('calendar_events').update({ is_available: val }).eq('id', id); loadEvents(); }
+    async function deleteEv(id) { if(confirm('Delete event?')) { await supabaseClient.from('calendar_events').delete().eq('id', id); loadEvents(); } }
+
+    async function loadConfig() {
+        const { data } = await supabaseClient.from('remote_config').select('*').order('key');
+        const list = document.getElementById('configList');
+        list.innerHTML = '';
+        data.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `<p class="config-key">${c.key}</p><div class="config-value-row"><textarea id="cfg-${c.key}">${c.value}</textarea>
+                <button class="btn btn-save" onclick="saveCfg('${c.key}')">Save</button></div>`;
+            list.appendChild(div);
+        });
+    }
+
+    async function saveCfg(key) {
+        const val = document.getElementById('cfg-' + key).value;
+        await supabaseClient.from('remote_config').update({ value: val }).eq('key', key);
+        showToast('Saved');
+    }
+
+    function showGate() { document.getElementById('authGate').style.display = 'flex'; document.getElementById('appShell').style.display = 'none'; }
+    function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.tab, section').forEach(el => el.classList.remove('active'));
+        t.classList.add('active');
+        document.getElementById('section-' + t.dataset.tab).classList.add('active');
+    }));
+
+    document.getElementById('gateSubmit').addEventListener('click', async () => {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email: gateEmail.value, password: gatePassword.value });
+        if (error) document.getElementById('gateError').textContent = error.message;
+        else showApp(data.session);
+    });
+
+    document.getElementById('lockBtn').addEventListener('click', async () => { await supabaseClient.auth.signOut(); location.reload(); });
+    document.getElementById('toggleAddForm').addEventListener('click', () => document.getElementById('addForm').classList.toggle('open'));
+    document.getElementById('saveAdd').addEventListener('click', async () => {
+        await supabaseClient.from('calendar_events').insert({ name: fName.value, date: fDate.value, is_available: fAvailable.checked });
+        document.getElementById('addForm').classList.remove('open'); loadEvents();
+    });
+
+    window.onload = init;
+</script>
+</body>
+</html>

@@ -16,7 +16,9 @@ class CalendarDataSource(
     val assignments: StateFlow<List<EventAssignment>> = _assignments.asStateFlow()
 
     suspend fun fetchCalendarEvents(): Result<List<CalendarEvent>> = try {
-        Result.success(supabaseClient.from("calendar_events").select().decodeList())
+        Result.success(supabaseClient.from("calendar_events")
+            .select{ filter { eq("is_available", true) } }
+            .decodeList())
     } catch (e: Exception) {
         Result.failure(e)
     }

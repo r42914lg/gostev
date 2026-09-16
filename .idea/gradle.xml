@@ -35,6 +35,7 @@
             <option value="$PROJECT_DIR$/features" />
             <option value="$PROJECT_DIR$/features/authorization" />
             <option value="$PROJECT_DIR$/features/event-details" />
+            <option value="$PROJECT_DIR$/features/secret-panel" />
           </set>
         </option>
       </GradleProjectSettings>
