@@ -3,9 +3,9 @@ package com.r42914lg.catering.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.r42914lg.catering.core.data.UserDataSource
+import com.r42914lg.catering.core.data.UserManager
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.jsonPrimitive
 
 class AuthViewModel(
     private val userDataSource: UserDataSource,
+    private val userManager: UserManager,
     private val supabaseClient: SupabaseClient
 ) : ViewModel() {
 
@@ -34,18 +34,17 @@ class AuthViewModel(
         combine(_isSignupMode, _isLoading, _error) { isSignup, isLoading, error -> 
             Triple(isSignup, isLoading, error) 
         },
-        supabaseClient.auth.sessionStatus
-    ) { basicInfo, modeInfo, sessionStatus ->
+        userManager.userData
+    ) { basicInfo, modeInfo, userData ->
         val (email, password, name) = basicInfo
         val (isSignup, isLoading, error) = modeInfo
         
-        val user = if (sessionStatus is SessionStatus.Authenticated) {
-            val supabaseUser = supabaseClient.auth.currentUserOrNull()
+        val user = userData?.let { 
             UserInfo(
-                name = supabaseUser?.userMetadata?.get("name")?.jsonPrimitive?.content ?: "User",
-                email = supabaseUser?.email ?: ""
+                name = it.name,
+                email = supabaseClient.auth.currentUserOrNull()?.email ?: ""
             )
-        } else null
+        }
 
         AuthState(
             email = email,
@@ -67,13 +66,21 @@ class AuthViewModel(
             is AuthAction.EmailChanged -> _email.value = action.value
             is AuthAction.PasswordChanged -> _password.value = action.value
             is AuthAction.NameChanged -> _name.value = action.value
-            AuthAction.SwitchModeClicked -> _isSignupMode.update { !it }
+            AuthAction.SwitchModeClicked -> {
+                _isSignupMode.update { !it }
+                _error.value = null
+            }
             AuthAction.SubmitClicked -> handleSubmit()
             AuthAction.SignOutClicked -> signOut()
         }
     }
 
     private fun handleSubmit() {
+        if (_isSignupMode.value && _name.value.isBlank()) {
+            _error.value = "Name is required"
+            return
+        }
+
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null

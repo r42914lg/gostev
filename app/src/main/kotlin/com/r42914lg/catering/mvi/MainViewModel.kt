@@ -87,10 +87,14 @@ internal class MainViewModel(
             emit(Action.Load) 
         }
         .flatMapLatest { action -> reduce(action) },
-        calendarDataSource.assignments
-    ) { state, assignments ->
+        calendarDataSource.assignments,
+        userManager.userData
+    ) { state, assignments, userData ->
         myAssignments = assignments
-        getUpdatedState().copy(isLoading = state.isLoading)
+        getUpdatedState().copy(
+            isLoading = state.isLoading,
+            userName = userData?.name
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5.seconds),

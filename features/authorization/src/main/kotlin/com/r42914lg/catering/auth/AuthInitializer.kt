@@ -5,6 +5,6 @@ import org.koin.dsl.module
 
 class AuthInitializer {
     val module = module {
-        viewModel { AuthViewModel(get(), get()) }
+        viewModel { AuthViewModel(get(), get(), get()) }
     }
 }

@@ -235,9 +235,22 @@ with check (
   )
 );
 
+-- ============================================
+-- 10. OPERATOR USERS SHOULD read all user's registration requests
+-- ============================================
+create policy "operators can read all users"
+on users for select
+to authenticated
+using (
+  exists (
+    select 1 from admin_roles
+    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
+  )
+);
+
 
 -- ============================================
--- 10. ASSIGN ROLES (run manually per admin, after
+-- 11. ASSIGN ROLES (run manually per admin, after
 --     this script — needs real user UUIDs to exist)
 -- ============================================
 -- 1. Get the user's UID from Authentication → Users in the Supabase

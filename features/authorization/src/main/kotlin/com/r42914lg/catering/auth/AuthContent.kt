@@ -187,6 +187,11 @@ private fun AuthForm(
             )
         }
 
+        val isButtonEnabled = !state.isLoading && 
+            state.email.isNotBlank() && 
+            state.password.isNotBlank() && 
+            (!state.isSignupMode || state.name.isNotBlank())
+
         Button(
             onClick = { onAction(AuthAction.SubmitClicked) },
             modifier = Modifier
@@ -194,7 +199,7 @@ private fun AuthForm(
                 .height(54.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Pine, contentColor = Paper),
-            enabled = !state.isLoading
+            enabled = isButtonEnabled
         ) {
             if (state.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Paper, strokeWidth = 2.dp)

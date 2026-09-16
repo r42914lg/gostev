@@ -82,7 +82,7 @@
 
     <header>
         <div>
-            <h1>Admin Panel</h1>
+            <h1>Admin Panel<span id="roleSuffix"></span></h1>
             <p style="color: var(--muted); margin: 4px 0 0;">Review requests and manage events</p>
         </div>
         <div class="tabs" id="tabs">
@@ -153,6 +153,7 @@
         document.getElementById('whoami').textContent = session.user.email;
         const { data: roles } = await supabaseClient.from('admin_roles').select('role').eq('user_id', session.user.id);
         myRoles = roles.map(r => r.role);
+        document.getElementById('roleSuffix').textContent = myRoles.length ? ' - ' + myRoles.join(', ') : '';
 
         if (myRoles.length === 0) {
             document.getElementById('noAccess').style.display = 'block';
@@ -251,8 +252,19 @@
     });
 
     document.getElementById('lockBtn').addEventListener('click', async () => { await supabaseClient.auth.signOut(); location.reload(); });
-    document.getElementById('toggleAddForm').addEventListener('click', () => document.getElementById('addForm').classList.toggle('open'));
+    document.getElementById('toggleAddForm').addEventListener('click', () => {
+        const form = document.getElementById('addForm');
+        form.classList.toggle('open');
+        if (form.classList.contains('open') && !fDate.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            fDate.value = `${yyyy}-${mm}-${dd}`;
+        }
+    });
     document.getElementById('saveAdd').addEventListener('click', async () => {
+        if (!fName.value.trim() || !fDate.value) { alert('Name and date are required'); return; }
         await supabaseClient.from('calendar_events').insert({ name: fName.value, date: fDate.value, is_available: fAvailable.checked });
         document.getElementById('addForm').classList.remove('open'); loadEvents();
     });
