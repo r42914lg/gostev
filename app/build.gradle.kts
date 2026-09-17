@@ -33,7 +33,8 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:data"))
+    implementation(project(":core:data:api"))
+    implementation(project(":core:data:impl"))
     implementation(project(":core:remote-config:api"))
     implementation(project(":core:prefs:api"))
     implementation(project(":core:remote-config:impl"))

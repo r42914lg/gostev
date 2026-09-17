@@ -7,7 +7,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:data"))
+    implementation(project(":core:data:api"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)

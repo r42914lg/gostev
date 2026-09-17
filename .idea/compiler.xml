@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="25" />
+    <bytecodeTargetLevel target="25">
+      <module name="Catering.core.data.main" target="17" />
+      <module name="Catering.core.data.test" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>

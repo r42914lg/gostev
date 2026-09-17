@@ -26,6 +26,8 @@
             <option value="$PROJECT_DIR$/build-logic/convention-plugins" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core/data" />
+            <option value="$PROJECT_DIR$/core/data/api" />
+            <option value="$PROJECT_DIR$/core/data/impl" />
             <option value="$PROJECT_DIR$/core/prefs" />
             <option value="$PROJECT_DIR$/core/prefs/api" />
             <option value="$PROJECT_DIR$/core/prefs/impl" />

@@ -51,14 +51,19 @@
         .status-closed { background: var(--hairline); color: var(--muted); }
         .config-key { font-size: 13px; font-weight: 600; color: var(--pine); margin: 0 0 8px; font-family: monospace; }
         .config-value-row { display: flex; gap: 10px; align-items: flex-start; }
-        textarea { width: 100%; border: 1px solid var(--hairline); border-radius: 7px; padding: 9px 10px; font-family: monospace; font-size: 12.5px; }
-        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 11px 18px; border-radius: 9px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        textarea, input, select { width: 100%; border: 1px solid var(--hairline); border-radius: 7px; padding: 9px 10px; font-family: inherit; font-size: 13.5px; }
+        textarea { font-family: monospace; font-size: 12.5px; }
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 11px 18px; border-radius: 9px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 2000; }
         .toast.show { opacity: 1; }
         .add-form { background: var(--paper); border: 1px solid var(--hairline); border-radius: 12px; padding: 18px; margin-bottom: 18px; display: none; }
         .add-form.open { display: block; }
         .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 12px; align-items: end; }
+        .banner-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
         label { display: block; font-size: 11.5px; font-weight: 600; color: var(--bronze); margin-bottom: 5px; }
-        input[type="text"], input[type="date"] { width: 100%; border: 1px solid var(--hairline); border-radius: 7px; padding: 9px 10px; }
+        .banner-card { display: flex; gap: 20px; align-items: flex-start; }
+        .banner-img-preview { width: 140px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--hairline); background: #eee; flex-shrink: 0; }
+        .banner-fields { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .banner-full-row { grid-column: span 2; }
     </style>
 </head>
 <body>
@@ -92,6 +97,7 @@
             <button class="tab" data-tab="events" id="tabEvents">
                 Events <span class="count" id="countEvents">0</span>
             </button>
+            <button class="tab" data-tab="banners" id="tabBanners">Banners</button>
             <button class="tab" data-tab="config" id="tabConfig">Config</button>
         </div>
     </header>
@@ -126,7 +132,42 @@
         <div id="eventsList"></div>
     </section>
 
+    <section id="section-banners">
+        <div style="display:flex; justify-content:space-between; margin-bottom:16px; align-items:center;">
+            <h2 style="font-family:Fraunces, serif; margin:0; font-size:20px;">Banners</h2>
+            <button class="btn btn-primary" id="toggleAddBannerForm">+ Add Banner</button>
+        </div>
+        <div class="add-form" id="addBannerForm">
+            <div class="banner-form-grid">
+                <div class="banner-full-row"><label>Description</label><input id="bDesc" type="text"></div>
+                <div><label>Image File</label><input id="bFile" type="file" accept="image/*"></div>
+                <div><label>Linked Event</label><select id="bEidSelect"></select></div>
+                <div><label>Version</label><input id="bVer" type="number" value="1"></div>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn" onclick="document.getElementById('addBannerForm').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" id="saveAddBanner">Upload & Save Banner</button>
+            </div>
+        </div>
+        <div id="bannersList"></div>
+    </section>
+
     <section id="section-config">
+        <div style="display:flex; justify-content:space-between; margin-bottom:16px; align-items:center;">
+            <h2 style="font-family:Fraunces, serif; margin:0; font-size:20px;">Remote Config</h2>
+            <button class="btn btn-primary" id="toggleAddConfigForm">+ Add Key</button>
+        </div>
+        <div class="add-form" id="addConfigForm">
+            <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; margin-bottom:12px;">
+                <div><label>Key Name</label><input id="cKey" type="text" placeholder="rc_feature_enabled"></div>
+                <div><label>Initial Value</label><input id="cVal" type="text"></div>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn" onclick="document.getElementById('addConfigForm').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" id="saveAddConfig">Create Key</button>
+            </div>
+        </div>
+        <div id="configLoading" class="loading" style="display:none;">Loading config…</div>
         <div id="configList"></div>
     </section>
 </div>
@@ -139,6 +180,7 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let myRoles = [];
+    let allEventsCached = [];
 
     async function init() {
         const { data } = await supabaseClient.auth.getSession();
@@ -152,7 +194,7 @@
     async function showApp(session) {
         document.getElementById('whoami').textContent = session.user.email;
         const { data: roles } = await supabaseClient.from('admin_roles').select('role').eq('user_id', session.user.id);
-        myRoles = roles.map(r => r.role);
+        myRoles = roles ? roles.map(r => r.role) : [];
         document.getElementById('roleSuffix').textContent = myRoles.length ? ' - ' + myRoles.join(', ') : '';
 
         if (myRoles.length === 0) {
@@ -170,17 +212,19 @@
         const isMain = myRoles.includes('maintainer');
         document.getElementById('tabRequests').style.display = isOp ? 'flex' : 'none';
         document.getElementById('tabEvents').style.display = isOp ? 'flex' : 'none';
+        document.getElementById('tabBanners').style.display = isOp ? 'flex' : 'none';
         document.getElementById('tabConfig').style.display = isMain ? 'flex' : 'none';
-        if (isOp) { loadRequests(); loadEvents(); }
+
+        if (isOp) { loadRequests(); loadEvents(); loadBanners(); }
         if (isMain) loadConfig();
     }
 
     async function loadRequests() {
         const { data } = await supabaseClient.from('event_assignments').select('user_id, event_id, users(name), calendar_events(date, name)').eq('status', 'APPLIED');
-        document.getElementById('countPending').textContent = data.length;
+        document.getElementById('countPending').textContent = data ? data.length : 0;
         const list = document.getElementById('requestsList');
-        list.innerHTML = data.length ? '' : '<div class="card">No pending requests</div>';
-        data.forEach(req => {
+        list.innerHTML = (data && data.length) ? '' : '<div class="card">No pending requests</div>';
+        if (data) data.forEach(req => {
             const card = document.createElement('div');
             card.className = 'card req-card';
             card.innerHTML = `<div><p class="req-title">${req.calendar_events.name}</p><p class="req-meta">${req.calendar_events.date} • Requested by ${req.users.name}</p></div>
@@ -199,42 +243,147 @@
 
     async function loadEvents() {
         const { data } = await supabaseClient.from('calendar_events').select('*').order('date', { ascending: true });
-        document.getElementById('countEvents').textContent = data.length;
+        allEventsCached = data || [];
+        document.getElementById('countEvents').textContent = allEventsCached.length;
         const list = document.getElementById('eventsList');
         list.innerHTML = '';
-        data.forEach(ev => {
+        allEventsCached.forEach(ev => {
             const d = new Date(ev.date + 'T00:00:00');
             const row = document.createElement('div');
             row.className = 'card event-row';
             row.innerHTML = `<div class="event-date-chip">${d.toLocaleString('en-US', {month:'short'})}<br>${d.getDate()}</div>
-                <div style="flex:1"><p style="font-weight:500; margin:0">${ev.name}</p><span class="status-pill ${ev.is_available?'status-open':'status-closed'}">${ev.is_available?'Open':'Closed'}</span></div>
+                <div style="flex:1"><p style="font-weight:500; margin:0">${ev.name} (ID: ${ev.id})</p><span class="status-pill ${ev.is_available?'status-open':'status-closed'}">${ev.is_available?'Open':'Closed'}</span></div>
                 <div style="display:flex; gap:12px; align-items:center;"><label style="font-size:12px; margin:0"><input type="checkbox" ${ev.is_available?'checked':''} onchange="toggleAvail(${ev.id}, this.checked)"> Available</label>
                 <button class="btn btn-delete" onclick="deleteEv(${ev.id})">Delete</button></div>`;
             list.appendChild(row);
+        });
+        updateBannerEventDropdowns();
+    }
+
+    function updateBannerEventDropdowns() {
+        const html = '<option value="">None</option>' + allEventsCached.map(e => `<option value="${e.id}">${e.name} (${e.date})</option>`).join('');
+        document.getElementById('bEidSelect').innerHTML = html;
+        document.querySelectorAll('.banner-event-select').forEach(sel => {
+            const currentVal = sel.dataset.selected;
+            sel.innerHTML = html;
+            sel.value = currentVal || "";
         });
     }
 
     async function toggleAvail(id, val) { await supabaseClient.from('calendar_events').update({ is_available: val }).eq('id', id); loadEvents(); }
     async function deleteEv(id) { if(confirm('Delete event?')) { await supabaseClient.from('calendar_events').delete().eq('id', id); loadEvents(); } }
 
+    async function loadBanners() {
+        const { data } = await supabaseClient.from('banners').select('*').order('id', { ascending: false });
+        const list = document.getElementById('bannersList');
+        list.innerHTML = (data && data.length) ? '' : '<div class="card">No banners yet</div>';
+
+        if (data) data.forEach(b => {
+            // Use SDK to get the public URL safely
+            const { data: { publicUrl } } = supabaseClient.storage.from('banners').getPublicUrl(b.image_path);
+
+            const div = document.createElement('div');
+            div.className = 'card banner-card';
+            div.innerHTML = `
+                <img src="${publicUrl}" class="banner-img-preview"
+                     onerror="console.error('Failed to load image:', '${publicUrl}'); this.src='https://placehold.co/140x80?text=Error';">
+                <div class="banner-fields">
+                    <div class="banner-full-row"><label>Description</label><input type="text" id="bd-${b.id}" value="${b.description}"></div>
+                    <div><label>Image Path (ReadOnly)</label><input type="text" value="${b.image_path}" disabled></div>
+                    <div><label>Linked Event</label><select id="be-${b.id}" class="banner-event-select" data-selected="${b.event_id || ""}"></select></div>
+                    <div><label>Version</label><input type="number" id="bv-${b.id}" value="${b.version}"></div>
+                    <div class="banner-full-row" style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+                        <button class="btn btn-delete" onclick="deleteBanner(${b.id}, '${b.image_path}')">Delete</button>
+                        <button class="btn btn-save" onclick="saveBanner(${b.id})">Save Changes</button>
+                    </div>
+                </div>`;
+            list.appendChild(div);
+        });
+        updateBannerEventDropdowns();
+    }
+
+    async function saveBanner(id) {
+        const description = document.getElementById('bd-'+id).value;
+        const event_id = document.getElementById('be-'+id).value || null;
+        const version = parseInt(document.getElementById('bv-'+id).value) || 1;
+
+        await supabaseClient.from('banners').update({ description, event_id, version }).eq('id', id);
+        showToast('Banner updated');
+        loadBanners();
+    }
+
+    async function deleteBanner(id, path) {
+        if(confirm('Delete banner? This will also remove the image from storage.')) {
+            await supabaseClient.from('banners').delete().eq('id', id);
+            await supabaseClient.storage.from('banners').remove([path]);
+            showToast('Banner deleted');
+            loadBanners();
+        }
+    }
+
     async function loadConfig() {
+        const loadingEl = document.getElementById('configLoading');
+        if (loadingEl) loadingEl.style.display = 'block';
+
         const { data } = await supabaseClient.from('remote_config').select('*').order('key');
+        if (loadingEl) loadingEl.style.display = 'none';
+
         const list = document.getElementById('configList');
-        list.innerHTML = '';
-        data.forEach(c => {
+        list.innerHTML = (data && data.length) ? '' : '<div class="card">No config values found</div>';
+
+        if (data) data.forEach(c => {
             const div = document.createElement('div');
             div.className = 'card';
-            div.innerHTML = `<p class="config-key">${c.key}</p><div class="config-value-row"><textarea id="cfg-${c.key}">${c.value}</textarea>
-                <button class="btn btn-save" onclick="saveCfg('${c.key}')">Save</button></div>`;
+            div.innerHTML = `
+                <p class="config-key">${c.key}</p>
+                <div class="config-value-row">
+                    <textarea id="cfg-${c.key}">${c.value}</textarea>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button class="btn btn-save" onclick="saveCfg('${c.key}')">Save</button>
+                        <button class="btn btn-delete" style="padding: 4px 8px; font-size: 11px;" onclick="deleteCfg('${c.key}')">Delete</button>
+                    </div>
+                </div>`;
             list.appendChild(div);
         });
     }
 
     async function saveCfg(key) {
         const val = document.getElementById('cfg-' + key).value;
-        await supabaseClient.from('remote_config').update({ value: val }).eq('key', key);
-        showToast('Saved');
+        const { error } = await supabaseClient.from('remote_config').update({ value: val }).eq('key', key);
+        if (error) alert('Error: ' + error.message);
+        else showToast('Saved');
     }
+
+    async function deleteCfg(key) {
+        if (confirm(`Delete key "${key}"? This may break the app if it expects this value.`)) {
+            const { error } = await supabaseClient.from('remote_config').delete().eq('key', key);
+            if (error) alert('Error: ' + error.message);
+            else {
+                showToast('Deleted');
+                loadConfig();
+            }
+        }
+    }
+
+    document.getElementById('toggleAddConfigForm').addEventListener('click', () => document.getElementById('addConfigForm').classList.toggle('open'));
+
+    document.getElementById('saveAddConfig').addEventListener('click', async () => {
+        const key = document.getElementById('cKey').value.trim();
+        const value = document.getElementById('cVal').value;
+
+        if (!key) { alert('Key name is required'); return; }
+
+        const { error } = await supabaseClient.from('remote_config').insert({ key, value });
+        if (error) {
+            alert('Error: ' + error.message);
+        } else {
+            document.getElementById('addConfigForm').classList.remove('open');
+            document.getElementById('cKey').value = '';
+            document.getElementById('cVal').value = '';
+            showToast('Key created');
+            loadConfig();
+        }
+    });
 
     function showGate() { document.getElementById('authGate').style.display = 'flex'; document.getElementById('appShell').style.display = 'none'; }
     function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
@@ -252,21 +401,71 @@
     });
 
     document.getElementById('lockBtn').addEventListener('click', async () => { await supabaseClient.auth.signOut(); location.reload(); });
+
     document.getElementById('toggleAddForm').addEventListener('click', () => {
         const form = document.getElementById('addForm');
         form.classList.toggle('open');
-        if (form.classList.contains('open') && !fDate.value) {
+        if (form.classList.contains('open')) {
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
-            fDate.value = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('fDate').value = `${yyyy}-${mm}-${dd}`;
         }
     });
+
     document.getElementById('saveAdd').addEventListener('click', async () => {
-        if (!fName.value.trim() || !fDate.value) { alert('Name and date are required'); return; }
-        await supabaseClient.from('calendar_events').insert({ name: fName.value, date: fDate.value, is_available: fAvailable.checked });
+        const name = fName.value;
+        const date = fDate.value;
+        const is_available = fAvailable.checked;
+        if (!name.trim() || !date) { alert('Name and date are required'); return; }
+        await supabaseClient.from('calendar_events').insert({ name, date, is_available });
         document.getElementById('addForm').classList.remove('open'); loadEvents();
+    });
+
+    document.getElementById('toggleAddBannerForm').addEventListener('click', () => document.getElementById('addBannerForm').classList.toggle('open'));
+
+    document.getElementById('saveAddBanner').addEventListener('click', async () => {
+        const description = bDesc.value;
+        const event_id = bEidSelect.value || null;
+        const version = parseInt(bVer.value) || 1;
+        const file = bFile.files[0];
+
+        if (!file) { alert('Please choose an image file'); return; }
+
+        const saveBtn = document.getElementById('saveAddBanner');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Uploading...';
+
+        const fileName = `${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
+        const { error: uploadError } = await supabaseClient.storage.from('banners').upload(fileName, file);
+
+        if (uploadError) {
+            alert('Upload failed: ' + uploadError.message);
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Upload & Save Banner';
+            return;
+        }
+
+        const { error: dbError } = await supabaseClient.from('banners').insert({
+            description,
+            image_path: fileName,
+            event_id,
+            version
+        });
+
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Upload & Save Banner';
+
+        if (dbError) {
+            alert('DB Save failed: ' + dbError.message);
+            return;
+        }
+
+        document.getElementById('addBannerForm').classList.remove('open');
+        bDesc.value = ''; bFile.value = '';
+        showToast('Banner added');
+        loadBanners();
     });
 
     window.onload = init;

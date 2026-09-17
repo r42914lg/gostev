@@ -53,16 +53,29 @@ create table remote_config (
 
 
 -- ============================================
--- 5. ENABLE ROW LEVEL SECURITY
+-- 5. BANNERS TABLE
+-- ============================================
+create table banners (
+  id bigint generated always as identity primary key,
+  description text not null default '',
+  image_path text not null,
+  event_id bigint references calendar_events(id) on delete set null,
+  version integer not null default 1
+);
+
+
+-- ============================================
+-- 6. ENABLE ROW LEVEL SECURITY
 -- ============================================
 alter table users enable row level security;
 alter table calendar_events enable row level security;
 alter table event_assignments enable row level security;
 alter table remote_config enable row level security;
+alter table banners enable row level security;
 
 
 -- ============================================
--- 6. POLICIES
+-- 7. POLICIES
 -- ============================================
 
 -- remote_config: everyone can read, including logged-out (anon) users
@@ -74,6 +87,12 @@ using (true);
 -- calendar_events: everyone can read, including logged-out (anon) users
 create policy "read all events"
 on calendar_events for select
+to anon, authenticated
+using (true);
+
+-- banners: everyone can read, including logged-out (anon) users
+create policy "read all banners"
+on banners for select
 to anon, authenticated
 using (true);
 
@@ -109,7 +128,7 @@ using (auth.uid() = user_id);
 
 
 -- ============================================
--- 7. ADMIN ROLES (Operator / Maintainer)
+-- 8. ADMIN ROLES (Operator / Maintainer)
 -- ============================================
 -- Two independent roles for the web admin panel. A user can hold
 -- 'operator', 'maintainer', both, or neither. Roles are assigned
@@ -135,7 +154,7 @@ using (auth.uid() = user_id);
 
 
 -- ============================================
--- 8. OPERATOR POLICIES
+-- 9. OPERATOR POLICIES
 -- ============================================
 -- "Requests" are rows in event_assignments with status = 'APPLIED'.
 -- Approve = update status to 'CONFIRMED'. Reject = delete the row,
@@ -213,9 +232,58 @@ using (
   )
 );
 
+-- Manage banners.
+create policy "operators manage banners"
+on banners for all
+to authenticated
+using (
+  exists (
+    select 1 from admin_roles
+    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
+  )
+)
+with check (
+  exists (
+    select 1 from admin_roles
+    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
+  )
+);
+
 
 -- ============================================
--- 9. MAINTAINER POLICIES
+-- 10. STORAGE BUCKET: BANNERS
+-- ============================================
+-- Note: Buckets are created via dashboard or API.
+-- These policies assume a bucket named 'banners' exists.
+
+-- Allow anyone to read files in the 'banners' bucket
+create policy "public read banners"
+on storage.objects for select
+to anon, authenticated
+using (bucket_id = 'banners');
+
+-- Allow operators to upload/manage files in the 'banners' bucket
+create policy "operators manage banner storage"
+on storage.objects for all
+to authenticated
+using (
+  bucket_id = 'banners' and
+  exists (
+    select 1 from admin_roles
+    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
+  )
+)
+with check (
+  bucket_id = 'banners' and
+  exists (
+    select 1 from admin_roles
+    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
+  )
+);
+
+
+-- ============================================
+-- 11. MAINTAINER POLICIES
 -- ============================================
 -- remote_config currently has no write policy either — this grants
 -- insert/update/delete to Maintainers only.
