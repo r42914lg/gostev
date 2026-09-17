@@ -36,6 +36,7 @@
             <option value="$PROJECT_DIR$/core/remote-config/impl" />
             <option value="$PROJECT_DIR$/features" />
             <option value="$PROJECT_DIR$/features/authorization" />
+            <option value="$PROJECT_DIR$/features/banners" />
             <option value="$PROJECT_DIR$/features/event-details" />
             <option value="$PROJECT_DIR$/features/secret-panel" />
           </set>

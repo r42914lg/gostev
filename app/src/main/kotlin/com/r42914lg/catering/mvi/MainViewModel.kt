@@ -10,6 +10,7 @@ import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.core.data.model.EventAssignment
 import com.r42914lg.catering.remoteconfig.RemoteConfig
 import com.r42914lg.catering.remoteconfig.RemoteConfigKey
+import com.r42914lg.catering.usecase.ObserveBannersUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -45,8 +46,9 @@ internal interface MainStateHolder {
 
 internal class MainViewModel(
     private val calendarDataSource: CalendarDataSource,
-    private val userManager: UserManager,
     private val remoteConfig: RemoteConfig,
+    observeBannersUseCase: ObserveBannersUseCase,
+    userManager: UserManager,
 ) : ViewModel(), MainStateHolder {
 
     private val timeZone = TimeZone.currentSystemDefault()
@@ -88,12 +90,14 @@ internal class MainViewModel(
         }
         .flatMapLatest { action -> reduce(action) },
         calendarDataSource.assignments,
-        userManager.userData
-    ) { state, assignments, userData ->
+        userManager.userData,
+        observeBannersUseCase()
+    ) { state, assignments, userData, banners ->
         myAssignments = assignments
         getUpdatedState().copy(
             isLoading = state.isLoading,
-            userName = userData?.name
+            userName = userData?.name,
+            banners = banners
         )
     }.stateIn(
         scope = viewModelScope,

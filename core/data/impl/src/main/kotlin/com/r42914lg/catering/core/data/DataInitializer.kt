@@ -1,5 +1,6 @@
 package com.r42914lg.catering.core.data
 
+import com.r42914lg.catering.core.data.internal.BannersDataSourceImpl
 import com.r42914lg.catering.core.data.internal.CalendarDataSourceImpl
 import com.r42914lg.catering.core.data.internal.UserDataSourceImpl
 import com.r42914lg.catering.core.data.internal.UserManagerImpl
@@ -22,5 +23,6 @@ class DataInitializer {
         single<CalendarDataSource> { CalendarDataSourceImpl(get()) }
         single<UserDataSource> { UserDataSourceImpl(get()) }
         single<UserManager> { UserManagerImpl(get()) }
+        single<BannersDataSource> { BannersDataSourceImpl(get()) }
     }
 }

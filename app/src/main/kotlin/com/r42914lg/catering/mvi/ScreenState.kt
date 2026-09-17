@@ -1,5 +1,6 @@
 package com.r42914lg.catering.mvi
 
+import com.r42914lg.catering.core.data.model.Banner
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.core.data.model.EventAssignment
 import kotlinx.datetime.LocalDate
@@ -11,6 +12,7 @@ internal data class ScreenState(
     val yearTitle: String = "",
     val days: List<CalendarDay> = emptyList(),
     val assignments: List<EventAssignment> = emptyList(),
+    val banners: List<Banner> = emptyList(),
 ) {
     fun copyWithIsLoading(isLoading: Boolean) = copy(isLoading = isLoading)
 }
