@@ -4,12 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.r42914lg.catering.core.data.UserDataSource
 import com.r42914lg.catering.core.data.UserManager
+import com.r42914lg.catering.core.utils.combine
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,17 +28,14 @@ class AuthViewModel(
     private val _error = MutableStateFlow<String?>(null)
 
     val state: StateFlow<AuthState> = combine(
-        combine(_email, _password, _name) { email, password, name -> 
-            Triple(email, password, name) 
-        },
-        combine(_isSignupMode, _isLoading, _error) { isSignup, isLoading, error -> 
-            Triple(isSignup, isLoading, error) 
-        },
-        userManager.userData
-    ) { basicInfo, modeInfo, userData ->
-        val (email, password, name) = basicInfo
-        val (isSignup, isLoading, error) = modeInfo
-        
+        _email,
+        _password,
+        _name,
+        _isSignupMode,
+        _isLoading,
+        _error,
+        userManager.userData,
+    ) { email, password, name, isSignup, isLoading, error, userData ->
         val user = userData?.let { 
             UserInfo(
                 name = it.name,

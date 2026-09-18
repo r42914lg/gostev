@@ -6,6 +6,7 @@ import com.r42914lg.catering.core.data.CalendarDataSource
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.core.data.model.EventAssignment
 import com.r42914lg.catering.core.data.model.Skill
+import com.r42914lg.catering.core.utils.combine
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus

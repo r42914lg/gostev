@@ -22,6 +22,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Catering"
 include(":app")
+include(":core:utils")
 include(":core:remote-config:api")
 include(":core:remote-config:impl")
 include(":core:prefs:api")

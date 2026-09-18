@@ -1,4 +1,4 @@
-package com.r42914lg.catering.details
+package com.r42914lg.catering.core.utils
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine as combineFlow
