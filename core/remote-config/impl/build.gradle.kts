@@ -14,6 +14,7 @@ dependencies {
 
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.auth)
 
     api(libs.koin.core)
     api(libs.koin.android)

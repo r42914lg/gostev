@@ -14,7 +14,7 @@ interface RemoteConfig {
     fun clearDebugOverride(configKey: RemoteConfigKey)
 
     companion object {
-        val RC_TTL = 1.minutes
+        val RC_TTL = 120.minutes
     }
 }
 

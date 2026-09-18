@@ -2,7 +2,10 @@ package com.r42914lg.catering.remoteconfig.integration
 
 import android.content.Context
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.concurrent.ConcurrentHashMap
@@ -20,6 +23,8 @@ internal class SupabaseRemoteConfigIntegration(
 
     override suspend fun fetch(appContext: Context) {
         try {
+            supabaseClient.auth.sessionStatus.first { it !is SessionStatus.Initializing }
+
             val results = supabaseClient
                 .from("remote_config")
                 .select()
@@ -29,12 +34,11 @@ internal class SupabaseRemoteConfigIntegration(
             results.forEach { item ->
                 configMap[item.key] = item.value
             }
-
             isInitialized = true
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
-            // Keep the last successful config.
+            /* no-op */
         }
     }
 

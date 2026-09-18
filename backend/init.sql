@@ -102,6 +102,17 @@ on users for select
 to authenticated
 using (auth.uid() = id);
 
+-- users: maintainers can manage all users
+create policy "maintainers manage all users"
+on users for all
+to authenticated
+using (
+  exists (
+    select 1 from admin_roles
+    where admin_roles.user_id = auth.uid() and admin_roles.role = 'maintainer'
+  )
+);
+
 -- event_assignments: users can read only their own assignments
 create policy "read own assignments"
 on event_assignments for select
@@ -137,7 +148,7 @@ using (auth.uid() = user_id);
 -- sign-up flow in section 1 above.
 
 create table admin_roles (
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
   role text not null check (role in ('operator', 'maintainer')),
   primary key (user_id, role)
 );

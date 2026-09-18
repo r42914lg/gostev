@@ -7,10 +7,13 @@ import com.r42914lg.catering.remoteconfig.RemoteConfigKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transformLatest
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class ObserveBannersUseCase(
     private val bannersDataSource: BannersDataSource,
@@ -21,6 +24,8 @@ class ObserveBannersUseCase(
         remoteConfig.updates
             .filter { it == RemoteConfigKey.RC_BANNERS_VERSION }
             .onStart { emit(RemoteConfigKey.RC_BANNERS_VERSION) }
+            .map { remoteConfig.getString(RemoteConfigKey.RC_BANNERS_VERSION) }
+            .distinctUntilChanged()
             .transformLatest {
                 while (true) {
                     val banners = loadBanners()
@@ -42,6 +47,6 @@ class ObserveBannersUseCase(
     }
 
     private companion object {
-        private val BANNERS_TTL = 5.minutes
+        private val BANNERS_TTL = 60.minutes
     }
 }
