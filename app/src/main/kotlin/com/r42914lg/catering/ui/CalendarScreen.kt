@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.r42914lg.catering.BuildConfig
 import com.r42914lg.catering.auth.AuthContent
+import com.r42914lg.catering.banners.BannersListView
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.secret.SecretPanel
 import com.r42914lg.catering.details.DetailsContent
@@ -61,6 +62,10 @@ internal fun CalendarScreen(
                 }
                 MainEffect.ForceUpdate -> {
                     showForceUpdateModal = true
+                }
+                is MainEffect.OpenEventDetails -> {
+                    selectedDayEvents = effect.events
+                    showBottomSheetForDay = effect.events.first().date
                 }
             }
         }
@@ -127,6 +132,16 @@ internal fun CalendarScreen(
                                         .fillMaxSize()
                                         .verticalScroll(rememberScrollState())
                                 ) {
+                                    if (state.hasBanners) {
+                                        BannersListView(
+                                            banners = state.banners,
+                                            baseUrl = state.bannersBaseUrl,
+                                            onBannerClick = { eventId ->
+                                                stateHolder.onScreenAction(ScreenEvent.BannerClicked(eventId))
+                                            },
+                                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                                        )
+                                    }
                                     MonthSelector(
                                         monthTitle = state.monthTitle,
                                         yearTitle = state.yearTitle,

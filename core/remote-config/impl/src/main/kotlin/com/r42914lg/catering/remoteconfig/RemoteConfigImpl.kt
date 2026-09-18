@@ -14,13 +14,13 @@ internal class RemoteConfigImpl(
     private val appContext: Context,
 ) : RemoteConfig {
     private val defaultMap = RemoteDefaultConfig.DEFAULT_CONFIG_MAP
-    private val _updates = MutableSharedFlow<RemoteConfigKey>(extraBufferCapacity = 1)
+    private val _updates = MutableSharedFlow<RemoteConfigKey>(
+        extraBufferCapacity = RemoteConfigKey.entries.size,
+    )
     override val updates: Flow<RemoteConfigKey> = _updates.asSharedFlow()
 
     override suspend fun fetch() {
-        coroutineScope {
-            async { integration.fetch(appContext) }
-        }.await()
+        integration.fetch(appContext)
         syncDebugOverride()
         RemoteConfigKey.entries.forEach { _updates.tryEmit(it) }
     }

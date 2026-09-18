@@ -1,6 +1,7 @@
 package com.r42914lg.catering.remoteconfig
 
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Duration.Companion.minutes
 
 interface RemoteConfig {
     val updates: Flow<RemoteConfigKey>
@@ -11,6 +12,10 @@ interface RemoteConfig {
     fun getDebugInfo(): List<RemoteConfigDebugInfo>
     fun setDebugOverride(configKey: RemoteConfigKey, value: String)
     fun clearDebugOverride(configKey: RemoteConfigKey)
+
+    companion object {
+        val RC_TTL = 1.minutes
+    }
 }
 
 data class RemoteConfigDebugInfo(

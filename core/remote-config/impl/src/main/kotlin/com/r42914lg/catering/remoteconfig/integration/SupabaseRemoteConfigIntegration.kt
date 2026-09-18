@@ -6,9 +6,10 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 
 internal class SupabaseRemoteConfigIntegration(
-    private val supabaseClient: SupabaseClient
+    private val supabaseClient: SupabaseClient,
 ) : RemoteConfigIntegration {
 
     override val isEnabled: Boolean = true
@@ -16,17 +17,11 @@ internal class SupabaseRemoteConfigIntegration(
     override val priority: Int = 1
 
     private val configMap = ConcurrentHashMap<String, String>()
-    private var lastFetchTime: Long = 0
-    private val cacheTtlMs = 60 * 60 * 1000
 
     override suspend fun fetch(appContext: Context) {
-        val currentTime = System.currentTimeMillis()
-        if (isInitialized && (currentTime - lastFetchTime < cacheTtlMs)) {
-            return
-        }
-
         try {
-            val results = supabaseClient.from("remote_config")
+            val results = supabaseClient
+                .from("remote_config")
                 .select()
                 .decodeList<RemoteConfigItem>()
 
@@ -34,22 +29,22 @@ internal class SupabaseRemoteConfigIntegration(
             results.forEach { item ->
                 configMap[item.key] = item.value
             }
+
             isInitialized = true
-            lastFetchTime = currentTime
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
-            /* no-op */
+            // Keep the last successful config.
         }
     }
 
     override fun contains(key: String): Boolean = configMap.containsKey(key)
-
     override fun getString(key: String): String = configMap[key] ?: ""
-
     override fun getAll(): Map<String, String> = configMap.toMap()
 
     @Serializable
     private data class RemoteConfigItem(
         @SerialName("key") val key: String,
-        @SerialName("value") val value: String
+        @SerialName("value") val value: String,
     )
 }

@@ -10,7 +10,7 @@ import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.core.data.model.EventAssignment
 import com.r42914lg.catering.remoteconfig.RemoteConfig
 import com.r42914lg.catering.remoteconfig.RemoteConfigKey
-import com.r42914lg.catering.usecase.ObserveBannersUseCase
+import com.r42914lg.catering.banners.usecase.ObserveBannersUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -84,20 +84,21 @@ internal class MainViewModel(
                 .filter { it == RemoteConfigKey.RC_MIN_VERSION }
                 .map { Action.ForceUpdateCheck }
         )
-        .onStart { 
+        .onStart {
             emit(Action.ForceUpdateCheck)
             emit(Action.Load) 
         }
         .flatMapLatest { action -> reduce(action) },
         calendarDataSource.assignments,
         userManager.userData,
-        observeBannersUseCase()
-    ) { state, assignments, userData, banners ->
+        observeBannersUseCase(),
+    ) { state, assignments, userData, (banners, bannersBaseUrl) ->
         myAssignments = assignments
         getUpdatedState().copy(
             isLoading = state.isLoading,
             userName = userData?.name,
-            banners = banners
+            banners = banners,
+            bannersBaseUrl = bannersBaseUrl
         )
     }.stateIn(
         scope = viewModelScope,
@@ -121,6 +122,12 @@ internal class MainViewModel(
                 ScreenEvent.NextMonthClicked -> actions.emit(Action.NextMonth)
                 ScreenEvent.PreviousMonthClicked -> actions.emit(Action.PrevMonth)
                 ScreenEvent.RefreshRequested -> actions.emit(Action.Refresh)
+                is ScreenEvent.BannerClicked -> {
+                    val clickedEvent = allEvents.find { it.id == event.eventId }
+                    if (clickedEvent != null) {
+                        _effects.emit(MainEffect.OpenEventDetails(listOf(clickedEvent)))
+                    }
+                }
             }
         }
     }
@@ -157,7 +164,7 @@ internal class MainViewModel(
     private suspend fun loadData(): Boolean {
         val eventsResult = calendarDataSource.fetchCalendarEvents()
         val assignmentsResult = calendarDataSource.fetchAssignments()
-        
+
         allEvents = eventsResult.getOrDefault(emptyList())
 
         return eventsResult.isSuccess && assignmentsResult.isSuccess

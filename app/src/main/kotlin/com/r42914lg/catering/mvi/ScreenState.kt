@@ -13,8 +13,10 @@ internal data class ScreenState(
     val days: List<CalendarDay> = emptyList(),
     val assignments: List<EventAssignment> = emptyList(),
     val banners: List<Banner> = emptyList(),
+    val bannersBaseUrl: String = ""
 ) {
-    fun copyWithIsLoading(isLoading: Boolean) = copy(isLoading = isLoading)
+    val hasBanners: Boolean
+        get() = banners.isNotEmpty() && bannersBaseUrl.isNotBlank()
 }
 
 internal data class CalendarDay(

@@ -9,11 +9,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.r42914lg.catering.remoteconfig.RemoteConfig
 import com.r42914lg.catering.theme.CateringTheme
 import com.r42914lg.catering.ui.AnimatedSplashScreen
 import com.r42914lg.catering.ui.CalendarScreen
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
+
+    private val remoteConfig: RemoteConfig by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -26,6 +36,15 @@ class MainActivity : ComponentActivity() {
                     AnimatedSplashScreen(onAnimationFinished = { showSplash = false })
                 } else {
                     CalendarScreen()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (isActive) {
+                    remoteConfig.fetch()
+                    delay(RemoteConfig.RC_TTL)
                 }
             }
         }
