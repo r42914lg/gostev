@@ -3,12 +3,15 @@ package com.r42914lg.catering.core.data.internal
 import com.r42914lg.catering.core.data.CalendarDataSource
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.core.data.model.EventAssignment
+import com.r42914lg.catering.core.data.model.Skill
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.Serializable
 
 internal class CalendarDataSourceImpl(
     private val supabaseClient: SupabaseClient,
@@ -16,11 +19,15 @@ internal class CalendarDataSourceImpl(
     private val _assignments = MutableStateFlow<List<EventAssignment>>(emptyList())
     override val assignments: StateFlow<List<EventAssignment>> = _assignments.asStateFlow()
 
+    @Serializable
+    private data class EventSkillJoin(val skills: Skill)
+
     override suspend fun fetchCalendarEvents(): Result<List<CalendarEvent>> = try {
         Result.success(supabaseClient.from("calendar_events")
             .select{ filter { eq("is_available", true) } }
             .decodeList())
     } catch (e: Exception) {
+        e.printStackTrace()
         Result.failure(e)
     }
 
@@ -36,13 +43,26 @@ internal class CalendarDataSourceImpl(
         _assignments.value = list
         Result.success(Unit)
     } catch (e: Exception) {
+        e.printStackTrace()
         Result.failure(e)
     }
 
-    override suspend fun applyForEvent(userId: String, eventId: Long): Boolean {
+    override suspend fun fetchSkillsForEvent(eventId: Long): Result<List<Skill>> = try {
+        val results = supabaseClient.from("event_skills")
+            .select(Columns.raw("skills(*)")) {
+                filter { eq("event_id", eventId) }
+            }
+            .decodeList<EventSkillJoin>()
+        Result.success(results.map { it.skills })
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Result.failure(e)
+    }
+
+    override suspend fun applyForEvent(userId: String, eventId: Long, skills: String?): Boolean {
         val result = try {
             supabaseClient.from("event_assignments").insert(
-                EventAssignment(userId = userId, eventId = eventId)
+                EventAssignment(userId = userId, eventId = eventId, skills = skills)
             )
             true
         } catch (_: Exception) {

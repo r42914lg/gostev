@@ -64,6 +64,7 @@
         .banner-img-preview { width: 140px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--hairline); background: #eee; flex-shrink: 0; }
         .banner-fields { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .banner-full-row { grid-column: span 2; }
+        .skill-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     </style>
 </head>
 <body>
@@ -98,6 +99,7 @@
                 Events <span class="count" id="countEvents">0</span>
             </button>
             <button class="tab" data-tab="banners" id="tabBanners">Banners</button>
+            <button class="tab" data-tab="skills" id="tabSkills">Skills</button>
             <button class="tab" data-tab="users" id="tabUsers">Users</button>
             <button class="tab" data-tab="config" id="tabConfig">Config</button>
         </div>
@@ -153,6 +155,21 @@
         <div id="bannersList"></div>
     </section>
 
+    <section id="section-skills">
+        <div style="display:flex; justify-content:space-between; margin-bottom:16px; align-items:center;">
+            <h2 style="font-family:Fraunces, serif; margin:0; font-size:20px;">Skills</h2>
+            <button class="btn btn-primary" id="toggleAddSkillForm">+ Add Skill</button>
+        </div>
+        <div class="add-form" id="addSkillForm">
+            <div><label>Skill Name</label><input id="sName" type="text" placeholder="Cooking"></div>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+                <button class="btn" onclick="document.getElementById('addSkillForm').classList.remove('open')">Cancel</button>
+                <button class="btn btn-primary" id="saveAddSkill">Create Skill</button>
+            </div>
+        </div>
+        <div id="skillsList"></div>
+    </section>
+
     <section id="section-users">
         <div style="display:flex; justify-content:space-between; margin-bottom:16px; align-items:center;">
             <h2 style="font-family:Fraunces, serif; margin:0; font-size:20px;">Users</h2>
@@ -190,6 +207,7 @@
 
     let myRoles = [];
     let allEventsCached = [];
+    let masterSkills = [];
 
     async function init() {
         const { data } = await supabaseClient.auth.getSession();
@@ -222,72 +240,34 @@
         document.getElementById('tabRequests').style.display = isOp ? 'flex' : 'none';
         document.getElementById('tabEvents').style.display = isOp ? 'flex' : 'none';
         document.getElementById('tabBanners').style.display = isOp ? 'flex' : 'none';
+        document.getElementById('tabSkills').style.display = isOp ? 'flex' : 'none';
         document.getElementById('tabUsers').style.display = isMain ? 'flex' : 'none';
         document.getElementById('tabConfig').style.display = isMain ? 'flex' : 'none';
 
         if (isOp) {
             loadRequests();
+
+            // Fetch master skills once
+            const { data: skills } = await supabaseClient.from('skills').select('*').order('name');
+            masterSkills = skills || [];
+
             await loadEvents();
             await loadBanners();
+            loadSkills();
         }
         if (isMain) { loadConfig(); loadUsers(); }
     }
 
-    async function loadUsers() {
-        const loadingEl = document.getElementById('usersLoading');
-        if (loadingEl) loadingEl.style.display = 'block';
-
-        const { data } = await supabaseClient.from('users').select('*, admin_roles(role)').order('name');
-        if (loadingEl) loadingEl.style.display = 'none';
-
-        const list = document.getElementById('usersList');
-        list.innerHTML = (data && data.length) ? '' : '<div class="card">No users found</div>';
-
-        if (data) data.forEach(u => {
-            const rolesList = (u.admin_roles && u.admin_roles.length)
-                ? u.admin_roles.map(r => r.role).join(', ')
-                : 'volunteer';
-
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.style.display = 'flex';
-            div.style.justifyContent = 'space-between';
-            div.style.alignItems = 'center';
-            div.innerHTML = `
-                <div>
-                    <p style="font-weight:600; margin:0">
-                        ${u.name || 'Unnamed User'}
-                        <span style="font-weight:500; font-size:11px; color:var(--pine); background:var(--pine-light); padding:2px 8px; border-radius:10px; margin-left:8px; text-transform:uppercase;">
-                            ${rolesList}
-                        </span>
-                    </p>
-                    <p style="font-size:12px; color:var(--muted); margin:4px 0 0">${u.id}</p>
-                </div>
-                <button class="btn btn-delete" onclick="deleteUser('${u.id}', '${u.name}')">Delete</button>`;
-            list.appendChild(div);
-        });
-    }
-
-    async function deleteUser(id, name) {
-        if (confirm(`Delete profile for "${name}"? Note: This deletes the public profile but the Auth account will remain until manually removed in Supabase.`)) {
-            const { error } = await supabaseClient.from('users').delete().eq('id', id);
-            if (error) alert('Error: ' + error.message);
-            else {
-                showToast('User profile deleted');
-                loadUsers();
-            }
-        }
-    }
-
     async function loadRequests() {
-        const { data } = await supabaseClient.from('event_assignments').select('user_id, event_id, users(name), calendar_events(date, name)').eq('status', 'APPLIED');
+        const { data } = await supabaseClient.from('event_assignments').select('user_id, event_id, status, skills, users(name), calendar_events(date, name)').eq('status', 'APPLIED');
         document.getElementById('countPending').textContent = data ? data.length : 0;
         const list = document.getElementById('requestsList');
         list.innerHTML = (data && data.length) ? '' : '<div class="card">No pending requests</div>';
         if (data) data.forEach(req => {
+            const formattedSkills = req.skills ? req.skills.split(':').join(', ') : 'None';
             const card = document.createElement('div');
             card.className = 'card req-card';
-            card.innerHTML = `<div><p class="req-title">${req.calendar_events.name}</p><p class="req-meta">${req.calendar_events.date} • Requested by ${req.users.name}</p></div>
+            card.innerHTML = `<div><p class="req-title">${req.calendar_events.name}</p><p class="req-meta">${req.calendar_events.date} • Requested by ${req.users.name}</p><p style="font-size:12px; color:var(--muted); margin-top:4px;">Skills: ${formattedSkills}</p></div>
                 <div style="display:flex; gap:8px;"><button class="btn btn-reject" onclick="handleReq('${req.user_id}', ${req.event_id}, 'reject')">Reject</button>
                 <button class="btn btn-primary" onclick="handleReq('${req.user_id}', ${req.event_id}, 'approve')">Approve</button></div>`;
             list.appendChild(card);
@@ -302,31 +282,83 @@
     }
 
     async function loadEvents() {
-        const { data } = await supabaseClient.from('calendar_events').select('*').order('date', { ascending: true });
-        allEventsCached = data || [];
+        const { data: events, error: evError } = await supabaseClient.from('calendar_events').select('*').order('date', { ascending: true });
+        const { data: links, error: linkError } = await supabaseClient.from('event_skills').select('*');
+
+        if (evError || linkError) { console.error('Events load error'); return; }
+        allEventsCached = events || [];
+
         document.getElementById('countEvents').textContent = allEventsCached.length;
         const list = document.getElementById('eventsList');
         list.innerHTML = '';
+
         allEventsCached.forEach(ev => {
             const d = new Date(ev.date + 'T00:00:00');
+            const eventLinks = links.filter(l => l.event_id === ev.id).map(l => l.skill_id);
+
             const row = document.createElement('div');
-            row.className = 'card event-row';
-            row.innerHTML = `<div class="event-date-chip">${d.toLocaleString('en-US', {month:'short'})}<br>${d.getDate()}</div>
-                <div style="flex:1"><p style="font-weight:500; margin:0">${ev.name} (ID: ${ev.id})</p><span class="status-pill ${ev.is_available?'status-open':'status-closed'}">${ev.is_available?'Open':'Closed'}</span></div>
-                <div style="display:flex; gap:12px; align-items:center;"><label style="font-size:12px; margin:0"><input type="checkbox" ${ev.is_available?'checked':''} onchange="toggleAvail(${ev.id}, this.checked)"> Available</label>
-                <button class="btn btn-delete" onclick="deleteEv(${ev.id})">Delete</button></div>`;
+            row.className = 'card';
+
+            // Skills checkboxes HTML
+            const skillsHtml = masterSkills.map(s => `
+                <label style="font-size:12px; display:inline-flex; align-items:center; margin-right:12px; cursor:pointer;">
+                    <input type="checkbox" class="ev-skill-cb" data-eid="${ev.id}" data-sid="${s.id}" ${eventLinks.includes(s.id) ? 'checked' : ''} style="width:14px; height:14px; margin-right:4px;">
+                    ${s.name}
+                </label>
+            `).join('');
+
+            row.innerHTML = `
+                <div class="event-row" style="margin-bottom:12px;">
+                    <div class="event-date-chip">${d.toLocaleString('en-US', {month:'short'})}<br>${d.getDate()}</div>
+                    <div style="flex:1">
+                        <p style="font-weight:500; margin:0">${ev.name} (ID: ${ev.id})</p>
+                        <span class="status-pill ${ev.is_available?'status-open':'status-closed'}">${ev.is_available?'Open':'Closed'}</span>
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <label style="font-size:12px; margin:0"><input type="checkbox" ${ev.is_available?'checked':''} onchange="toggleAvail(${ev.id}, this.checked)"> Available</label>
+                        <button class="btn btn-delete" onclick="deleteEv(${ev.id})">Delete</button>
+                    </div>
+                </div>
+                <div style="border-top: 1px solid var(--hairline); padding-top:10px;">
+                    <p style="font-size:11px; font-weight:600; color:var(--muted); margin:0 0 8px; text-transform:uppercase;">Required Skills</p>
+                    <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">
+                        ${skillsHtml || '<span style="font-size:12px; color:var(--muted)">No skills defined in Skills tab</span>'}
+                    </div>
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button class="btn btn-save" style="padding: 4px 10px; font-size:12px;" onclick="applyEventSkills(${ev.id})">Apply Skills</button>
+                    </div>
+                </div>`;
             list.appendChild(row);
         });
         updateBannerEventDropdowns();
     }
 
+    async function applyEventSkills(eventId) {
+        const cbs = document.querySelectorAll(`.ev-skill-cb[data-eid="${eventId}"]`);
+        const selectedSids = Array.from(cbs).filter(cb => cb.checked).map(cb => parseInt(cb.dataset.sid));
+
+        // 1. Delete existing links
+        await supabaseClient.from('event_skills').delete().eq('event_id', eventId);
+
+        // 2. Insert new links
+        if (selectedSids.length > 0) {
+            const toInsert = selectedSids.map(sid => ({ event_id: eventId, skill_id: sid }));
+            const { error } = await supabaseClient.from('event_skills').insert(toInsert);
+            if (error) { alert('Error applying skills: ' + error.message); return; }
+        }
+
+        showToast('Skills updated for event');
+        loadEvents();
+    }
+
     function updateBannerEventDropdowns() {
         const html = '<option value="">None</option>' + allEventsCached.map(e => `<option value="${e.id}">${e.name} (${e.date})</option>`).join('');
-        document.getElementById('bEidSelect').innerHTML = html;
+        const mainSelect = document.getElementById('bEidSelect');
+        if (mainSelect) mainSelect.innerHTML = html;
         document.querySelectorAll('.banner-event-select').forEach(sel => {
-            const currentVal = sel.dataset.selected;
+            const savedId = sel.getAttribute('data-selected');
             sel.innerHTML = html;
-            sel.value = currentVal || "";
+            if (savedId) sel.value = savedId;
         });
     }
 
@@ -337,16 +369,12 @@
         const { data } = await supabaseClient.from('banners').select('*').order('id', { ascending: false });
         const list = document.getElementById('bannersList');
         list.innerHTML = (data && data.length) ? '' : '<div class="card">No banners yet</div>';
-
         if (data) data.forEach(b => {
-            // Use SDK to get the public URL safely
             const { data: { publicUrl } } = supabaseClient.storage.from('banners').getPublicUrl(b.image_path);
-
             const div = document.createElement('div');
             div.className = 'card banner-card';
             div.innerHTML = `
-                <img src="${publicUrl}" class="banner-img-preview"
-                     onerror="console.error('Failed to load image:', '${publicUrl}'); this.src='https://placehold.co/140x80?text=Error';">
+                <img src="${publicUrl}" class="banner-img-preview" onerror="this.src='https://placehold.co/140x80?text=Error';">
                 <div class="banner-fields">
                     <div class="banner-full-row"><label>Description</label><input type="text" id="bd-${b.id}" value="${b.description}"></div>
                     <div><label>Image Path (ReadOnly)</label><input type="text" value="${b.image_path}" disabled></div>
@@ -366,14 +394,13 @@
         const description = document.getElementById('bd-'+id).value;
         const event_id = document.getElementById('be-'+id).value || null;
         const version = parseInt(document.getElementById('bv-'+id).value) || 1;
-
         await supabaseClient.from('banners').update({ description, event_id, version }).eq('id', id);
         showToast('Banner updated');
         loadBanners();
     }
 
     async function deleteBanner(id, path) {
-        if(confirm('Delete banner? This will also remove the image from storage.')) {
+        if(confirm('Delete banner?')) {
             await supabaseClient.from('banners').delete().eq('id', id);
             await supabaseClient.storage.from('banners').remove([path]);
             showToast('Banner deleted');
@@ -381,69 +408,99 @@
         }
     }
 
-    async function loadConfig() {
-        const loadingEl = document.getElementById('configLoading');
+    async function loadSkills() {
+        const { data } = await supabaseClient.from('skills').select('*').order('name');
+        const list = document.getElementById('skillsList');
+        list.innerHTML = (data && data.length) ? '' : '<div class="card">No skills found</div>';
+        if (data) data.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'card skill-item';
+            div.innerHTML = `
+                <input type="text" id="sn-${s.id}" value="${s.name}" style="flex:1">
+                <button class="btn btn-save" onclick="renameSkill(${s.id})">Rename</button>
+                <button class="btn btn-delete" onclick="deleteSkill(${s.id})">Delete</button>`;
+            list.appendChild(div);
+        });
+    }
+
+    async function renameSkill(id) {
+        const name = document.getElementById('sn-'+id).value.trim();
+        if (!name) return;
+        const { error } = await supabaseClient.from('skills').update({ name }).eq('id', id);
+        if (error) alert('Error: ' + error.message);
+        else showToast('Skill renamed');
+    }
+
+    async function deleteSkill(id) {
+        if(confirm('Delete skill? This will also remove it from all linked events.')) {
+            const { error } = await supabaseClient.from('skills').delete().eq('id', id);
+            if (error) alert('Error: ' + error.message);
+            else { showToast('Skill deleted'); loadSkills(); }
+        }
+    }
+
+    async function loadUsers() {
+        const loadingEl = document.getElementById('usersLoading');
         if (loadingEl) loadingEl.style.display = 'block';
-
-        const { data } = await supabaseClient.from('remote_config').select('*').order('key');
+        const { data } = await supabaseClient.from('users').select('*, admin_roles(role)').order('name');
         if (loadingEl) loadingEl.style.display = 'none';
+        const list = document.getElementById('usersList');
+        list.innerHTML = (data && data.length) ? '' : '<div class="card">No users found</div>';
+        if (data) data.forEach(u => {
+            const rolesList = (u.admin_roles && u.admin_roles.length) ? u.admin_roles.map(r => r.role).join(', ') : 'volunteer';
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+            div.style.alignItems = 'center';
+            div.innerHTML = `
+                <div>
+                    <p style="font-weight:600; margin:0">${u.name || 'Unnamed User'}
+                        <span style="font-weight:500; font-size:11px; color:var(--pine); background:var(--pine-light); padding:2px 8px; border-radius:10px; margin-left:8px; text-transform:uppercase;">${rolesList}</span>
+                    </p>
+                    <p style="font-size:12px; color:var(--muted); margin:4px 0 0">${u.id}</p>
+                </div>
+                <button class="btn btn-delete" onclick="deleteUser('${u.id}', '${u.name}')">Delete</button>`;
+            list.appendChild(div);
+        });
+    }
 
+    async function deleteUser(id, name) {
+        if (confirm(`Delete profile for "${name}"?`)) {
+            const { error } = await supabaseClient.from('users').delete().eq('id', id);
+            if (error) alert('Error: ' + error.message);
+            else { showToast('User profile deleted'); loadUsers(); }
+        }
+    }
+
+    async function loadConfig() {
+        const { data } = await supabaseClient.from('remote_config').select('*').order('key');
         const list = document.getElementById('configList');
         list.innerHTML = (data && data.length) ? '' : '<div class="card">No config values found</div>';
-
         if (data) data.forEach(c => {
             const div = document.createElement('div');
             div.className = 'card';
-            div.innerHTML = `
-                <p class="config-key">${c.key}</p>
-                <div class="config-value-row">
-                    <textarea id="cfg-${c.key}">${c.value}</textarea>
-                    <div style="display:flex; flex-direction:column; gap:8px;">
-                        <button class="btn btn-save" onclick="saveCfg('${c.key}')">Save</button>
-                        <button class="btn btn-delete" style="padding: 4px 8px; font-size: 11px;" onclick="deleteCfg('${c.key}')">Delete</button>
-                    </div>
-                </div>`;
+            div.innerHTML = `<p class="config-key">${c.key}</p><div class="config-value-row"><textarea id="cfg-${c.key}">${c.value}</textarea>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button class="btn btn-save" onclick="saveCfg('${c.key}')">Save</button>
+                    <button class="btn btn-delete" style="padding: 4px 8px; font-size: 11px;" onclick="deleteCfg('${c.key}')">Delete</button>
+                </div></div>`;
             list.appendChild(div);
         });
     }
 
     async function saveCfg(key) {
         const val = document.getElementById('cfg-' + key).value;
-        const { error } = await supabaseClient.from('remote_config').update({ value: val }).eq('key', key);
-        if (error) alert('Error: ' + error.message);
-        else showToast('Saved');
+        await supabaseClient.from('remote_config').update({ value: val }).eq('key', key);
+        showToast('Saved');
     }
 
     async function deleteCfg(key) {
-        if (confirm(`Delete key "${key}"? This may break the app if it expects this value.`)) {
-            const { error } = await supabaseClient.from('remote_config').delete().eq('key', key);
-            if (error) alert('Error: ' + error.message);
-            else {
-                showToast('Deleted');
-                loadConfig();
-            }
+        if (confirm(`Delete key "${key}"?`)) {
+            await supabaseClient.from('remote_config').delete().eq('key', key);
+            showToast('Deleted'); loadConfig();
         }
     }
-
-    document.getElementById('toggleAddConfigForm').addEventListener('click', () => document.getElementById('addConfigForm').classList.toggle('open'));
-
-    document.getElementById('saveAddConfig').addEventListener('click', async () => {
-        const key = document.getElementById('cKey').value.trim();
-        const value = document.getElementById('cVal').value;
-
-        if (!key) { alert('Key name is required'); return; }
-
-        const { error } = await supabaseClient.from('remote_config').insert({ key, value });
-        if (error) {
-            alert('Error: ' + error.message);
-        } else {
-            document.getElementById('addConfigForm').classList.remove('open');
-            document.getElementById('cKey').value = '';
-            document.getElementById('cVal').value = '';
-            showToast('Key created');
-            loadConfig();
-        }
-    });
 
     function showGate() { document.getElementById('authGate').style.display = 'flex'; document.getElementById('appShell').style.display = 'none'; }
     function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
@@ -462,70 +519,38 @@
 
     document.getElementById('lockBtn').addEventListener('click', async () => { await supabaseClient.auth.signOut(); location.reload(); });
 
-    document.getElementById('toggleAddForm').addEventListener('click', () => {
-        const form = document.getElementById('addForm');
-        form.classList.toggle('open');
-        if (form.classList.contains('open')) {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            document.getElementById('fDate').value = `${yyyy}-${mm}-${dd}`;
-        }
-    });
-
+    document.getElementById('toggleAddForm').addEventListener('click', () => document.getElementById('addForm').classList.toggle('open'));
     document.getElementById('saveAdd').addEventListener('click', async () => {
-        const name = fName.value;
-        const date = fDate.value;
-        const is_available = fAvailable.checked;
-        if (!name.trim() || !date) { alert('Name and date are required'); return; }
-        await supabaseClient.from('calendar_events').insert({ name, date, is_available });
+        await supabaseClient.from('calendar_events').insert({ name: fName.value, date: fDate.value, is_available: fAvailable.checked });
         document.getElementById('addForm').classList.remove('open'); loadEvents();
     });
 
     document.getElementById('toggleAddBannerForm').addEventListener('click', () => document.getElementById('addBannerForm').classList.toggle('open'));
-
     document.getElementById('saveAddBanner').addEventListener('click', async () => {
-        const description = bDesc.value;
-        const event_id = bEidSelect.value || null;
-        const version = parseInt(bVer.value) || 1;
         const file = bFile.files[0];
-
-        if (!file) { alert('Please choose an image file'); return; }
-
-        const saveBtn = document.getElementById('saveAddBanner');
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Uploading...';
-
+        if (!file) { alert('Please choose a file'); return; }
         const fileName = `${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
         const { error: uploadError } = await supabaseClient.storage.from('banners').upload(fileName, file);
+        if (uploadError) { alert('Upload failed: ' + uploadError.message); return; }
+        await supabaseClient.from('banners').insert({ description: bDesc.value, image_path: fileName, event_id: bEidSelect.value || null, version: parseInt(bVer.value) || 1 });
+        document.getElementById('addBannerForm').classList.remove('open'); showToast('Banner added'); loadBanners();
+    });
 
-        if (uploadError) {
-            alert('Upload failed: ' + uploadError.message);
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Upload & Save Banner';
-            return;
-        }
+    document.getElementById('toggleAddSkillForm').addEventListener('click', () => document.getElementById('addSkillForm').classList.toggle('open'));
+    document.getElementById('saveAddSkill').addEventListener('click', async () => {
+        const name = sName.value.trim();
+        if (!name) return;
+        const { error } = await supabaseClient.from('skills').insert({ name });
+        if (error) alert('Error: ' + error.message);
+        else { document.getElementById('addSkillForm').classList.remove('open'); sName.value = ''; showToast('Skill added'); loadSkills(); }
+    });
 
-        const { error: dbError } = await supabaseClient.from('banners').insert({
-            description,
-            image_path: fileName,
-            event_id,
-            version
-        });
-
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Upload & Save Banner';
-
-        if (dbError) {
-            alert('DB Save failed: ' + dbError.message);
-            return;
-        }
-
-        document.getElementById('addBannerForm').classList.remove('open');
-        bDesc.value = ''; bFile.value = '';
-        showToast('Banner added');
-        loadBanners();
+    document.getElementById('toggleAddConfigForm').addEventListener('click', () => document.getElementById('addConfigForm').classList.toggle('open'));
+    document.getElementById('saveAddConfig').addEventListener('click', async () => {
+        const key = cKey.value.trim();
+        if (!key) return;
+        await supabaseClient.from('remote_config').insert({ key, value: cVal.value });
+        document.getElementById('addConfigForm').classList.remove('open'); cKey.value = ''; cVal.value = ''; showToast('Key created'); loadConfig();
     });
 
     window.onload = init;

@@ -39,6 +39,7 @@ create table event_assignments (
   user_id uuid not null references users(id) on delete cascade,
   event_id bigint not null references calendar_events(id) on delete cascade,
   status text not null default 'APPLIED' check (status in ('APPLIED', 'CONFIRMED')),
+  skills text, -- Nullable concatenated string e.g. "dancing:cooking"
   primary key (user_id, event_id)
 );
 
@@ -65,88 +66,60 @@ create table banners (
 
 
 -- ============================================
--- 6. ENABLE ROW LEVEL SECURITY
+-- 6. SKILLS TABLE
+-- ============================================
+create table skills (
+  id bigint generated always as identity primary key,
+  name text not null unique
+);
+
+
+-- ============================================
+-- 7. EVENT_SKILLS TABLE (Many-to-Many)
+-- ============================================
+create table event_skills (
+  event_id bigint not null references calendar_events(id) on delete cascade,
+  skill_id bigint not null references skills(id) on delete cascade,
+  primary key (event_id, skill_id)
+);
+
+
+-- ============================================
+-- 8. ENABLE ROW LEVEL SECURITY
 -- ============================================
 alter table users enable row level security;
 alter table calendar_events enable row level security;
 alter table event_assignments enable row level security;
 alter table remote_config enable row level security;
 alter table banners enable row level security;
+alter table skills enable row level security;
+alter table event_skills enable row level security;
 
 
 -- ============================================
--- 7. POLICIES
+-- 9. GENERAL READ POLICIES
 -- ============================================
 
--- remote_config: everyone can read, including logged-out (anon) users
-create policy "read all config"
-on remote_config for select
-to anon, authenticated
-using (true);
+-- Everyone can read config, events, banners, skills, and links
+create policy "read all config" on remote_config for select to anon, authenticated using (true);
+create policy "read all events" on calendar_events for select to anon, authenticated using (true);
+create policy "read all banners" on banners for select to anon, authenticated using (true);
+create policy "read all skills" on skills for select to anon, authenticated using (true);
+create policy "read all event_skills" on event_skills for select to anon, authenticated using (true);
 
--- calendar_events: everyone can read, including logged-out (anon) users
-create policy "read all events"
-on calendar_events for select
-to anon, authenticated
-using (true);
+-- users: each user can read only their own profile
+create policy "read own user row" on users for select to authenticated using (auth.uid() = id);
 
--- banners: everyone can read, including logged-out (anon) users
-create policy "read all banners"
-on banners for select
-to anon, authenticated
-using (true);
-
--- users: each user can read only their own name/row
-create policy "read own user row"
-on users for select
-to authenticated
-using (auth.uid() = id);
-
--- users: maintainers can manage all users
-create policy "maintainers manage all users"
-on users for all
-to authenticated
-using (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'maintainer'
-  )
-);
-
--- event_assignments: users can read only their own assignments
-create policy "read own assignments"
-on event_assignments for select
-to authenticated
-using (auth.uid() = user_id);
-
--- event_assignments: users can insert only their own assignments
-create policy "insert own assignments"
-on event_assignments for insert
-to authenticated
-with check (auth.uid() = user_id);
-
--- event_assignments: users can update only their own assignments
-create policy "update own assignments"
-on event_assignments for update
-to authenticated
-using (auth.uid() = user_id);
-
--- event_assignments: users can delete only their own assignments (optional, add if needed)
-create policy "delete own assignments"
-on event_assignments for delete
-to authenticated
-using (auth.uid() = user_id);
+-- event_assignments: users can manage their own assignments
+create policy "read own assignments" on event_assignments for select to authenticated using (auth.uid() = user_id);
+create policy "insert own assignments" on event_assignments for insert to authenticated with check (auth.uid() = user_id);
+create policy "update own assignments" on event_assignments for update to authenticated using (auth.uid() = user_id);
+create policy "delete own assignments" on event_assignments for delete to authenticated using (auth.uid() = user_id);
 
 
 -- ============================================
--- 8. ADMIN ROLES (Operator / Maintainer)
+-- 10. ADMIN ROLES
 -- ============================================
--- Two independent roles for the web admin panel. A user can hold
--- 'operator', 'maintainer', both, or neither. Roles are assigned
--- manually (see bottom of this file), never by self-service — this
--- is separate from, and has no effect on, the normal Android app
--- sign-up flow in section 1 above.
-
 create table admin_roles (
   user_id uuid not null references users(id) on delete cascade,
   role text not null check (role in ('operator', 'maintainer')),
@@ -155,190 +128,61 @@ create table admin_roles (
 
 alter table admin_roles enable row level security;
 
--- A signed-in user can see only their own role rows — enough for
--- the admin panel to ask "what am I allowed to do?" without
--- exposing the full allowlist to every logged-in user.
-create policy "read own admin roles"
-on admin_roles for select
-to authenticated
-using (auth.uid() = user_id);
+create policy "read own admin roles" on admin_roles for select to authenticated using (auth.uid() = user_id);
 
 
 -- ============================================
--- 9. OPERATOR POLICIES
+-- 11. OPERATOR POLICIES
 -- ============================================
--- "Requests" are rows in event_assignments with status = 'APPLIED'.
--- Approve = update status to 'CONFIRMED'. Reject = delete the row,
--- since the status check constraint above has no 'REJECTED' value —
--- a rejected request simply isn't stored. If you'd rather keep a
--- record of rejections, add 'REJECTED' to the check constraint in
--- section 3 and change the admin panel to update instead of delete.
 
--- Operators need to see every user's assignments, not just their own,
--- to review requests across the whole app.
-create policy "operators read all assignments"
-on event_assignments for select
-to authenticated
-using (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-);
+-- View all assignments & user profiles for review
+create policy "operators read all assignments" on event_assignments for select to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
 
--- Approve a request.
-create policy "operators update any assignment"
-on event_assignments for update
-to authenticated
-using (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-);
+create policy "operators can read all users" on users for select to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
 
--- Reject a request (delete it).
-create policy "operators delete any assignment"
-on event_assignments for delete
-to authenticated
-using (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-);
+-- Manage assignments (Approve/Reject)
+create policy "operators update any assignment" on event_assignments for update to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
 
--- Add a new event. calendar_events currently has no insert policy at
--- all, so this is the first thing that grants write access to it.
-create policy "operators insert events"
-on calendar_events for insert
-to authenticated
-with check (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-);
+create policy "operators delete any assignment" on event_assignments for delete to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
 
--- Toggle is_available on an existing event.
-create policy "operators update events"
-on calendar_events for update
-to authenticated
-using (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-);
+-- Manage events
+create policy "operators insert events" on calendar_events for insert to authenticated
+with check (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
 
--- Delete an event (cascades to its event_assignments rows via the
--- foreign key in section 3).
-create policy "operators delete events"
-on calendar_events for delete
-to authenticated
-using (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-);
+create policy "operators update events" on calendar_events for update to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
 
--- Manage banners.
-create policy "operators manage banners"
-on banners for all
-to authenticated
-using (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-)
-with check (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-);
+create policy "operators delete events" on calendar_events for delete to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
+
+-- Manage banners
+create policy "operators manage banners" on banners for all to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
+
+-- Manage skills & linking
+create policy "operators manage skills" on skills for all to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
+
+create policy "operators manage event_skills" on event_skills for all to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
+
+-- Manage banner storage
+create policy "public read banners" on storage.objects for select to anon, authenticated using (bucket_id = 'banners');
+create policy "operators manage banners storage" on storage.objects for all to authenticated
+using (bucket_id = 'banners' and exists (select 1 from public.admin_roles where user_id = auth.uid() and role = 'operator'));
 
 
 -- ============================================
--- 10. STORAGE BUCKET: BANNERS
+-- 12. MAINTAINER POLICIES
 -- ============================================
--- Note: Buckets are created via dashboard or API.
--- These policies assume a bucket named 'banners' exists.
 
--- Allow anyone to read files in the 'banners' bucket
-create policy "public read banners"
-on storage.objects for select
-to anon, authenticated
-using (bucket_id = 'banners');
+-- Maintainers manage config & all user data
+create policy "maintainers modify remote_config" on remote_config for all to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'maintainer'));
 
--- Allow operators to upload/manage files in the 'banners' bucket
-create policy "operators manage banner storage"
-on storage.objects for all
-to authenticated
-using (
-  bucket_id = 'banners' and
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-)
-with check (
-  bucket_id = 'banners' and
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-);
-
-
--- ============================================
--- 11. MAINTAINER POLICIES
--- ============================================
--- remote_config currently has no write policy either — this grants
--- insert/update/delete to Maintainers only.
-create policy "maintainers modify remote_config"
-on remote_config for all
-to authenticated
-using (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'maintainer'
-  )
-)
-with check (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'maintainer'
-  )
-);
-
--- ============================================
--- 10. OPERATOR USERS SHOULD read all user's registration requests
--- ============================================
-create policy "operators can read all users"
-on users for select
-to authenticated
-using (
-  exists (
-    select 1 from admin_roles
-    where admin_roles.user_id = auth.uid() and admin_roles.role = 'operator'
-  )
-);
-
-
--- ============================================
--- 11. ASSIGN ROLES (run manually per admin, after
---     this script — needs real user UUIDs to exist)
--- ============================================
--- 1. Get the user's UID from Authentication → Users in the Supabase
---    dashboard (they sign up normally through the Android app, or
---    you create an account from that screen — no separate admin
---    login is created).
--- 2. Run one insert per role you want to grant, e.g.:
---
---    insert into admin_roles (user_id, role) values ('paste-uid-here', 'operator');
---    insert into admin_roles (user_id, role) values ('paste-uid-here', 'maintainer');
---
---    (insert both rows for someone who should have both roles)
+create policy "maintainers manage all users" on users for all to authenticated
+using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'maintainer'));

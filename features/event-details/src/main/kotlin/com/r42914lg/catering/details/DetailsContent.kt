@@ -1,6 +1,7 @@
 package com.r42914lg.catering.details
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -156,6 +157,40 @@ fun DetailsContent(
                     fontWeight = FontWeight.Medium,
                     color = Muted
                 )
+            }
+
+            if (state.status == DetailsState.Status.NOT_REGISTERED && state.availableSkills.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    text = "Skills required for this event:".uppercase(),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Bronze,
+                    modifier = Modifier.fillMaxWidth(),
+                    letterSpacing = 0.05.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                state.availableSkills.forEach { skill ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.onAction(DetailsAction.SkillToggled(skill.id)) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = state.selectedSkillIds.contains(skill.id),
+                            onCheckedChange = { viewModel.onAction(DetailsAction.SkillToggled(skill.id)) },
+                            colors = CheckboxDefaults.colors(checkedColor = Pine)
+                        )
+                        Text(
+                            text = skill.name,
+                            fontSize = 14.sp,
+                            color = Ink,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
             }
         }
 

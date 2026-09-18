@@ -9,6 +9,7 @@ data class EventAssignment(
     @SerialName("event_id")
     val eventId: Long = 0,
     val status: Status = Status.APPLIED,
+    val skills: String? = null,
 ) {
     @Serializable
     enum class Status { 
