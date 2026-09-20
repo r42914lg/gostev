@@ -8,7 +8,8 @@ android {
 
 dependencies {
     implementation(project(":core:data:api"))
-    implementation(project(":core:utils"))
+    implementation(project(":platform:utils"))
+    implementation(project(":platform:android-utils"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)

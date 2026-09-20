@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.core.data.model.EventAssignment
+import com.r42914lg.catering.utils.CollectEvents
 import kotlinx.datetime.LocalDate
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -44,12 +45,10 @@ fun DetailsContent(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(viewModel.effects) {
-        viewModel.effects.collect { effect ->
-            when (effect) {
-                is DetailsEffect.RegistrationStatusChanged -> {
-                    onStatusChanged()
-                }
+    CollectEvents(viewModel.effects) { effect ->
+        when (effect) {
+            DetailsEffect.RegistrationStatusChanged -> {
+                onStatusChanged()
             }
         }
     }

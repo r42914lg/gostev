@@ -13,7 +13,8 @@ internal data class ScreenState(
     val days: List<CalendarDay> = emptyList(),
     val assignments: List<EventAssignment> = emptyList(),
     val banners: List<Banner> = emptyList(),
-    val bannersBaseUrl: String = ""
+    val bannersBaseUrl: String = "",
+    val isUpdateRequired: Boolean = false,
 ) {
     val hasBanners: Boolean
         get() = banners.isNotEmpty() && bannersBaseUrl.isNotBlank()

@@ -4,6 +4,10 @@
     <bytecodeTargetLevel target="25">
       <module name="Catering.core.data.main" target="17" />
       <module name="Catering.core.data.test" target="17" />
+      <module name="Catering.core.utils" target="17" />
+      <module name="Catering.core.utils.main" target="17" />
+      <module name="Catering.core.utils.test" target="17" />
+      <module name="Catering.platform.android-utils.test" target="17" />
     </bytecodeTargetLevel>
   </component>
 </project>

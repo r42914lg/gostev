@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.r42914lg.catering.core.data.UserDataSource
 import com.r42914lg.catering.core.data.UserManager
-import com.r42914lg.catering.core.utils.combine
+import com.r42914lg.catering.utils.combine
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow

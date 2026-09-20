@@ -2,6 +2,7 @@ package com.r42914lg.catering.remoteconfig
 
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 interface RemoteConfig {
     val updates: Flow<RemoteConfigKey>
@@ -14,6 +15,7 @@ interface RemoteConfig {
     fun clearDebugOverride(configKey: RemoteConfigKey)
 
     companion object {
+        val RC_SECOND_ATTEMPT_TIMEOUT = 10.seconds
         val RC_TTL = 120.minutes
     }
 }

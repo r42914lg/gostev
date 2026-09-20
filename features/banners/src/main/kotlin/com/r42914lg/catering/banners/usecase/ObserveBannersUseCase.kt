@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transformLatest
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class ObserveBannersUseCase(
     private val bannersDataSource: BannersDataSource,
@@ -39,7 +40,6 @@ class ObserveBannersUseCase(
             .getString(RemoteConfigKey.RC_BANNERS_VERSION)
             .toIntOrNull()
             ?: 0
-
         return bannersDataSource.fetchBanners()
             .getOrDefault(emptyList())
             .filter { it.version == version && it.eventId != null }

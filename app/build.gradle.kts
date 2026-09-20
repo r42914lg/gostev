@@ -35,6 +35,8 @@ android {
 dependencies {
     implementation(project(":core:data:api"))
     implementation(project(":core:data:impl"))
+    implementation(project(":platform:android-utils"))
+    implementation(project(":platform:utils"))
     implementation(project(":core:remote-config:api"))
     implementation(project(":core:prefs:api"))
     implementation(project(":core:remote-config:impl"))

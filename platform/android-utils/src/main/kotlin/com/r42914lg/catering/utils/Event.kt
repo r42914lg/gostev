@@ -1,4 +1,4 @@
-package com.r42914lg.catering.event
+package com.r42914lg.catering.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +44,20 @@ inline fun <T> CollectEvents(
             eventFlow.collect {
                 it?.getContentIfNotHandled()?.let { event -> action(event) }
             }
+        }
+    }
+}
+
+@Composable
+inline fun <T> CollectFlows(
+    eventFlow: Flow<T>,
+    repeatLifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
+    crossinline action: suspend (value: T) -> Unit
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(eventFlow) {
+        lifecycleOwner.repeatOnLifecycle(repeatLifecycleState) {
+            eventFlow.collect { event -> action(event) }
         }
     }
 }

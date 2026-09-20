@@ -8,7 +8,7 @@ android {
 
 dependencies {
     implementation(project(":core:data:api"))
-    implementation(project(":core:utils"))
+    implementation(project(":platform:utils"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.serialization.json)

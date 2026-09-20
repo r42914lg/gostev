@@ -6,12 +6,13 @@ import com.r42914lg.catering.core.data.CalendarDataSource
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.core.data.model.EventAssignment
 import com.r42914lg.catering.core.data.model.Skill
-import com.r42914lg.catering.core.utils.combine
+import com.r42914lg.catering.utils.Event
+import com.r42914lg.catering.utils.combine
+import com.r42914lg.catering.utils.eventFlow
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,30 +22,28 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class DetailsViewModel(
-    initialEvents: List<CalendarEvent>,
+    private val initialEvents: List<CalendarEvent>,
     private val calendarDataSource: CalendarDataSource,
     private val supabaseClient: SupabaseClient,
 ) : ViewModel() {
 
-    private val _events = MutableStateFlow(initialEvents)
     private val _currentIndex = MutableStateFlow(0)
     private val _isLoading = MutableStateFlow(false)
     private val _availableSkills = MutableStateFlow<List<Skill>>(emptyList())
     private val _selectedSkillIds = MutableStateFlow<Set<Long>>(emptySet())
 
-    private val _effects = MutableSharedFlow<DetailsEffect>()
-    val effects: Flow<DetailsEffect> = _effects.asSharedFlow()
+    private val _effects = eventFlow<DetailsEffect>()
+    val effects: Flow<Event<DetailsEffect>> = _effects.asSharedFlow()
 
     val state: StateFlow<DetailsState> = combine(
-        _events,
         _currentIndex,
         calendarDataSource.assignments,
         supabaseClient.auth.sessionStatus,
         _isLoading,
         _availableSkills,
         _selectedSkillIds
-    ) { events, index, assignments, authStatus, isLoading, availableSkills, selectedSkillIds ->
-        val event = events.getOrNull(index)
+    ) { index, assignments, authStatus, isLoading, availableSkills, selectedSkillIds ->
+        val event = initialEvents.getOrNull(index)
         val isAuthorized = authStatus is SessionStatus.Authenticated
         val assignment = event?.let { e -> assignments.find { it.eventId == e.id } }
         
@@ -57,7 +56,7 @@ class DetailsViewModel(
         DetailsState(
             event = event,
             index = index,
-            total = events.size,
+            total = initialEvents.size,
             status = status,
             isAuthorized = isAuthorized,
             isLoading = isLoading,
@@ -79,7 +78,7 @@ class DetailsViewModel(
     }
 
     private fun fetchSkills(index: Int) {
-        val event = _events.value.getOrNull(index) ?: return
+        val event = initialEvents.getOrNull(index) ?: return
         viewModelScope.launch {
             calendarDataSource.fetchSkillsForEvent(event.id).onSuccess {
                 _availableSkills.value = it
@@ -92,7 +91,7 @@ class DetailsViewModel(
         when (action) {
             DetailsAction.ApplyClicked -> applyForEvent()
             DetailsAction.CancelClicked -> cancelAssignment()
-            DetailsAction.NextClicked -> _currentIndex.update { (it + 1).coerceAtMost(_events.value.size - 1) }
+            DetailsAction.NextClicked -> _currentIndex.update { (it + 1).coerceAtMost(initialEvents.size - 1) }
             DetailsAction.PrevClicked -> _currentIndex.update { (it - 1).coerceAtLeast(0) }
             is DetailsAction.SkillToggled -> toggleSkill(action.skillId)
         }
@@ -116,9 +115,11 @@ class DetailsViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             if (calendarDataSource.applyForEvent(userId, eventId, skillsString)) {
-                _effects.emit(DetailsEffect.RegistrationStatusChanged("Application successful"))
-            } else {
-                _effects.emit(DetailsEffect.RegistrationStatusChanged("Application failed"))
+                _effects.tryEmit(
+                    Event(
+                        DetailsEffect.RegistrationStatusChanged
+                    )
+                )
             }
             _isLoading.value = false
         }
@@ -131,9 +132,8 @@ class DetailsViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             if (calendarDataSource.cancelEventAssignment(userId, eventId)) {
-                _effects.emit(DetailsEffect.RegistrationStatusChanged("Registration canceled"))
-            } else {
-                _effects.emit(DetailsEffect.RegistrationStatusChanged("Cancellation failed"))
+                _selectedSkillIds.value = emptySet()
+                _effects.emit(Event(DetailsEffect.RegistrationStatusChanged))
             }
             _isLoading.value = false
         }

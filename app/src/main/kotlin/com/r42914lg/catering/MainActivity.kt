@@ -13,6 +13,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.r42914lg.catering.remoteconfig.RemoteConfig
+import com.r42914lg.catering.remoteconfig.RemoteConfigKey
 import com.r42914lg.catering.theme.CateringTheme
 import com.r42914lg.catering.ui.AnimatedSplashScreen
 import com.r42914lg.catering.ui.CalendarScreen
@@ -20,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
 
@@ -42,6 +44,8 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                remoteConfig.fetch()
+                delay(RemoteConfig.RC_SECOND_ATTEMPT_TIMEOUT)
                 while (isActive) {
                     remoteConfig.fetch()
                     delay(RemoteConfig.RC_TTL)

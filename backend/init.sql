@@ -101,11 +101,13 @@ alter table event_skills enable row level security;
 -- ============================================
 
 -- Everyone can read config, events, banners, skills, and links
-create policy "read all config" on remote_config for select to anon, authenticated using (true);
-create policy "read all events" on calendar_events for select to anon, authenticated using (true);
-create policy "read all banners" on banners for select to anon, authenticated using (true);
-create policy "read all skills" on skills for select to anon, authenticated using (true);
-create policy "read all event_skills" on event_skills for select to anon, authenticated using (true);
+-- Note: We remove the "TO anon, authenticated" restriction to make the policies
+-- more robust against SDK header synchronization delays on startup.
+create policy "read all config" on remote_config for select using (true);
+create policy "read all events" on calendar_events for select using (true);
+create policy "read all banners" on banners for select using (true);
+create policy "read all skills" on skills for select using (true);
+create policy "read all event_skills" on event_skills for select using (true);
 
 -- users: each user can read only their own profile
 create policy "read own user row" on users for select to authenticated using (auth.uid() = id);
@@ -171,7 +173,7 @@ create policy "operators manage event_skills" on event_skills for all to authent
 using (exists (select 1 from admin_roles where user_id = auth.uid() and role = 'operator'));
 
 -- Manage banner storage
-create policy "public read banners" on storage.objects for select to anon, authenticated using (bucket_id = 'banners');
+create policy "public read banners" on storage.objects for select using (bucket_id = 'banners');
 create policy "operators manage banners storage" on storage.objects for all to authenticated
 using (bucket_id = 'banners' and exists (select 1 from public.admin_roles where user_id = auth.uid() and role = 'operator'));
 

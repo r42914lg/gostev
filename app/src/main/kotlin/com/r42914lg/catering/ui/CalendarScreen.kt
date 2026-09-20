@@ -29,6 +29,7 @@ import com.r42914lg.catering.secret.SecretPanel
 import com.r42914lg.catering.details.DetailsContent
 import com.r42914lg.catering.mvi.*
 import com.r42914lg.catering.theme.*
+import com.r42914lg.catering.utils.CollectEvents
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -51,23 +52,29 @@ internal fun CalendarScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var statusChanged by remember { mutableStateOf(false) }
-    var showForceUpdateModal by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    LaunchedEffect(stateHolder.effects) {
-        stateHolder.effects.collect { effect ->
-            when (effect) {
-                is MainEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+    if (state.isUpdateRequired) {
+        AlertDialog(
+            onDismissRequest = { /* no-op - blocking modal */ },
+            confirmButton = {
+                Button(onClick = { (context as? Activity)?.finish() }) {
+                    Text("OK")
                 }
-                MainEffect.ForceUpdate -> {
-                    showForceUpdateModal = true
-                }
-                is MainEffect.OpenEventDetails -> {
-                    selectedDayEvents = effect.events
-                    showBottomSheetForDay = effect.events.first().date
-                }
+            },
+            title = { Text("Update Required") },
+            text = { Text("Update to latest version. Application will be closed") },
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+        )
+    }
+
+    CollectEvents(stateHolder.effects) { effect ->
+        when (effect) {
+            is MainEffect.OpenEventDetails -> {
+                selectedDayEvents = listOf(effect.event)
+                showBottomSheetForDay = effect.event.date
             }
+            is MainEffect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
         }
     }
 
@@ -122,7 +129,7 @@ internal fun CalendarScreen(
                         Box(modifier = Modifier.fillMaxSize()) {
                             PullToRefreshBox(
                                 isRefreshing = state.isLoading,
-                                onRefresh = { stateHolder.onScreenAction(ScreenEvent.RefreshRequested) },
+                                onRefresh = { stateHolder.onScreenAction(ScreenEvent.RefreshRequested()) },
                                 modifier = Modifier
                                     .padding(paddingValues)
                                     .fillMaxSize()
@@ -196,7 +203,9 @@ internal fun CalendarScreen(
                             onDismissRequest = {
                                 if (statusChanged) {
                                     statusChanged = false
-                                    stateHolder.onScreenAction(ScreenEvent.RefreshRequested)
+                                    stateHolder.onScreenAction(
+                                        ScreenEvent.RefreshRequested(false)
+                                    )
                                 }
                                 showBottomSheetForDay = null
                             },
@@ -222,7 +231,7 @@ internal fun CalendarScreen(
         }
     }
 
-    if (showForceUpdateModal) {
+    if (state.isUpdateRequired) {
         AlertDialog(
             onDismissRequest = { /* no-op - blocking modal */ },
             confirmButton = {

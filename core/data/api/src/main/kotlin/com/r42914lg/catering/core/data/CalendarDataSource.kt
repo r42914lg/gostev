@@ -6,8 +6,9 @@ import com.r42914lg.catering.core.data.model.Skill
 import kotlinx.coroutines.flow.StateFlow
 
 interface CalendarDataSource {
+    val calendarEvents: StateFlow<List<CalendarEvent>>
     val assignments: StateFlow<List<EventAssignment>>
-    suspend fun fetchCalendarEvents(): Result<List<CalendarEvent>>
+    suspend fun fetchCalendarEvents(): Result<Unit>
     suspend fun fetchAssignments(): Result<Unit>
     suspend fun fetchSkillsForEvent(eventId: Long): Result<List<Skill>>
     suspend fun applyForEvent(userId: String, eventId: Long, skills: String?): Boolean

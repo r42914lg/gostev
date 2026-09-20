@@ -48,6 +48,7 @@ import com.r42914lg.catering.theme.Muted
 import com.r42914lg.catering.theme.OtherMonthDay
 import com.r42914lg.catering.theme.Paper
 import com.r42914lg.catering.theme.Pine
+import com.r42914lg.catering.utils.Event
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -273,7 +274,7 @@ private fun CalendarScreenPreview() {
     val mockStateHolder = remember {
         object : MainStateHolder {
             override val screenState = MutableStateFlow(mockState).asStateFlow()
-            override val effects = emptyFlow<MainEffect>()
+            override val effects = emptyFlow<Event<MainEffect>>()
             override fun onScreenAction(event: ScreenEvent) {}
         }
     }

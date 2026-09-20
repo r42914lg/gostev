@@ -16,16 +16,21 @@ import kotlinx.serialization.Serializable
 internal class CalendarDataSourceImpl(
     private val supabaseClient: SupabaseClient,
 ) : CalendarDataSource {
+    private val _calendarEvents = MutableStateFlow<List<CalendarEvent>>(emptyList())
+    override val calendarEvents: StateFlow<List<CalendarEvent>> = _calendarEvents.asStateFlow()
+
     private val _assignments = MutableStateFlow<List<EventAssignment>>(emptyList())
     override val assignments: StateFlow<List<EventAssignment>> = _assignments.asStateFlow()
 
     @Serializable
     private data class EventSkillJoin(val skills: Skill)
 
-    override suspend fun fetchCalendarEvents(): Result<List<CalendarEvent>> = try {
-        Result.success(supabaseClient.from("calendar_events")
+    override suspend fun fetchCalendarEvents(): Result<Unit> = try {
+        val list = supabaseClient.from("calendar_events")
             .select{ filter { eq("is_available", true) } }
-            .decodeList())
+            .decodeList<CalendarEvent>()
+        _calendarEvents.value = list
+        Result.success(Unit)
     } catch (e: Exception) {
         e.printStackTrace()
         Result.failure(e)
