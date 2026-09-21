@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.designsys.CateringTheme
@@ -83,7 +84,7 @@ fun DetailsContent(
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Prev",
+                        contentDescription = stringResource(R.string.details_prev),
                         tint = if (state.index > 0) CateringTheme.colors.accent else Color.Transparent
                     )
                 }
@@ -97,7 +98,7 @@ fun DetailsContent(
             ) {
                 if (state.total > 1) {
                     Text(
-                        text = "Event ${state.index + 1} of ${state.total}",
+                        text = stringResource(R.string.details_event_pagination, state.index + 1, state.total),
                         fontSize = 11.sp,
                         color = CateringTheme.colors.muted
                     )
@@ -119,7 +120,7 @@ fun DetailsContent(
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "Next",
+                        contentDescription = stringResource(R.string.details_next),
                         tint = if (state.index < state.total - 1) CateringTheme.colors.accent else Color.Transparent
                     )
                 }
@@ -141,9 +142,9 @@ fun DetailsContent(
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     text = when (state.status) {
-                        DetailsState.Status.CONFIRMED -> "Confirmed"
-                        DetailsState.Status.APPLIED -> "Applied"
-                        DetailsState.Status.NOT_REGISTERED -> "Not Registered"
+                        DetailsState.Status.CONFIRMED -> stringResource(R.string.details_status_confirmed)
+                        DetailsState.Status.APPLIED -> stringResource(R.string.details_status_applied)
+                        DetailsState.Status.NOT_REGISTERED -> stringResource(R.string.details_status_not_registered)
                     },
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
@@ -154,7 +155,7 @@ fun DetailsContent(
             if (state.status == DetailsState.Status.NOT_REGISTERED && state.availableSkills.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(CateringTheme.spacing.xl))
                 Text(
-                    text = "Skills required for this event:".uppercase(),
+                    text = stringResource(R.string.details_skills_required).uppercase(),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = CateringTheme.colors.accent,
@@ -221,9 +222,9 @@ fun DetailsContent(
             } else {
                 Text(
                     text = when {
-                        !state.isAuthorized -> "Authorize to apply for event"
-                        state.status == DetailsState.Status.NOT_REGISTERED -> "Apply"
-                        else -> "Cancel registration"
+                        !state.isAuthorized -> stringResource(R.string.details_authorize_to_apply)
+                        state.status == DetailsState.Status.NOT_REGISTERED -> stringResource(R.string.details_apply)
+                        else -> stringResource(R.string.details_cancel_registration)
                     },
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold

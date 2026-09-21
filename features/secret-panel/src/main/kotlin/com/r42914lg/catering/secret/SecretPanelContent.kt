@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.r42914lg.catering.designsys.CateringTheme
@@ -32,7 +33,7 @@ fun SecretPanel(
             .verticalScroll(rememberScrollState())
     ) {
         Text(
-            text = "Debug Panel",
+            text = stringResource(R.string.secret_title),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = CateringTheme.colors.onBackground,
@@ -76,13 +77,13 @@ private fun ConfigItem(
             onValueChange = { textValue = it },
             modifier = Modifier.fillMaxWidth(),
             textStyle = MaterialTheme.typography.bodySmall,
-            label = { Text("Value", fontSize = 10.sp) },
+            label = { Text(stringResource(R.string.secret_label_value), fontSize = 10.sp) },
             trailingIcon = {
                 if (info.isOverridden) {
                     IconButton(onClick = onClear) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Clear override",
+                            contentDescription = stringResource(R.string.secret_desc_clear),
                             tint = CateringTheme.colors.error,
                             modifier = Modifier.size(CateringTheme.spacing.l)
                         )
@@ -99,7 +100,11 @@ private fun ConfigItem(
                 onClick = { onUpdate(textValue) },
                 enabled = textValue != info.currentValue
             ) {
-                Text("Apply Override", fontSize = 12.sp, color = CateringTheme.colors.brand)
+                Text(
+                    text = stringResource(R.string.secret_apply),
+                    fontSize = 12.sp,
+                    color = CateringTheme.colors.brand
+                )
             }
         }
     }

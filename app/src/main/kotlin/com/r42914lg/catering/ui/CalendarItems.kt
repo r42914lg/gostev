@@ -47,6 +47,8 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
+import androidx.compose.ui.res.stringResource
+import com.r42914lg.catering.R
 import kotlinx.datetime.plus
 
 @Composable
@@ -64,7 +66,11 @@ internal fun MonthSelector(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onPrevClick) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Prev", tint = CateringTheme.colors.accent)
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = stringResource(R.string.calendar_prev_desc),
+                tint = CateringTheme.colors.accent
+            )
         }
         
         Row(verticalAlignment = Alignment.Bottom) {
@@ -86,7 +92,11 @@ internal fun MonthSelector(
         }
 
         IconButton(onClick = onNextClick) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next", tint = CateringTheme.colors.accent)
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(R.string.calendar_next_desc),
+                tint = CateringTheme.colors.accent
+            )
         }
     }
 }

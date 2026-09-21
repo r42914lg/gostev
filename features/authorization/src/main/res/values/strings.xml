@@ -1,0 +1,17 @@
+<resources>
+    <string name="auth_create_account">Create account</string>
+    <string name="auth_sign_in">Sign in</string>
+    <string name="auth_sign_up">Sign up</string>
+    <string name="auth_sign_out">Sign out</string>
+    <string name="auth_label_name">Name</string>
+    <string name="auth_label_email">Email</string>
+    <string name="auth_label_password">Password</string>
+    <string name="auth_placeholder_name">Your name</string>
+    <string name="auth_placeholder_email">you@email.com</string>
+    <string name="auth_placeholder_password">••••••••</string>
+    <string name="auth_already_have_account">Already have an account? </string>
+    <string name="auth_dont_have_account">Don\'t have an account? </string>
+    <string name="auth_error_name_required">Name is required</string>
+    <string name="auth_error_failed">Authentication failed</string>
+    <string name="auth_error_sign_out_failed">Sign out failed</string>
+</resources>

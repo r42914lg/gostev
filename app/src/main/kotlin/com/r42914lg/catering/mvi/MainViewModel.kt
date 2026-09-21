@@ -2,6 +2,7 @@ package com.r42914lg.catering.mvi
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.r42914lg.catering.R
 import com.r42914lg.catering.banners.usecase.ObserveBannersUseCase
 import com.r42914lg.catering.core.data.UserManager
 import com.r42914lg.catering.core.data.model.Banner
@@ -130,7 +131,7 @@ internal class MainViewModel(
                 }
                 if (!refreshCalendarDataUseCase()) {
                     _effects.tryEmit(
-                        Event(MainEffect.ShowSnackbar("Could not load calendar data"))
+                        Event(MainEffect.ShowSnackbar(R.string.error_load_data))
                     )
                 }
                 emit(ScreenState(isLoading = false))

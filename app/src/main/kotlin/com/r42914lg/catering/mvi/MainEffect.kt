@@ -6,6 +6,6 @@ import com.r42914lg.catering.core.data.model.CalendarEvent
 
 @Stable
 internal sealed interface MainEffect {
-    data class ShowSnackbar(val message: String) : MainEffect
+    data class ShowSnackbar(val messageResId: Int) : MainEffect
     data class OpenEventDetails(val event: CalendarEvent) : MainEffect
 }

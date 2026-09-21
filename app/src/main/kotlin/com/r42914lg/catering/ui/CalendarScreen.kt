@@ -21,7 +21,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.res.stringResource
 import com.r42914lg.catering.BuildConfig
+import com.r42914lg.catering.R
 import com.r42914lg.catering.auth.AuthContent
 import com.r42914lg.catering.banners.BannersListView
 import com.r42914lg.catering.core.data.model.CalendarEvent
@@ -59,11 +61,11 @@ internal fun CalendarScreen(
             onDismissRequest = { /* no-op - blocking modal */ },
             confirmButton = {
                 Button(onClick = { (context as? Activity)?.finish() }) {
-                    Text("OK")
+                    Text(stringResource(R.string.update_ok))
                 }
             },
-            title = { Text("Update Required") },
-            text = { Text("Update to latest version. Application will be closed") },
+            title = { Text(stringResource(R.string.update_title)) },
+            text = { Text(stringResource(R.string.update_msg)) },
             properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
         )
     }
@@ -74,7 +76,7 @@ internal fun CalendarScreen(
                 selectedDayEvents = listOf(effect.event)
                 showBottomSheetForDay = effect.event.date
             }
-            is MainEffect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
+            is MainEffect.ShowSnackbar -> snackbarHostState.showSnackbar(context.getString(effect.messageResId))
         }
     }
 
@@ -114,10 +116,21 @@ internal fun CalendarScreen(
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = {
                             CenterAlignedTopAppBar(
-                                title = { Text("Calendar", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = CateringTheme.colors.onBackground) },
+                                title = {
+                                    Text(
+                                        text = stringResource(R.string.calendar_title),
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = CateringTheme.colors.onBackground
+                                    )
+                                },
                                 navigationIcon = {
                                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = CateringTheme.colors.onBackground)
+                                        Icon(
+                                            Icons.Default.Menu,
+                                            contentDescription = stringResource(R.string.calendar_menu_desc),
+                                            tint = CateringTheme.colors.onBackground
+                                        )
                                     }
                                 },
                                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -229,19 +242,5 @@ internal fun CalendarScreen(
                 }
             }
         }
-    }
-
-    if (state.isUpdateRequired) {
-        AlertDialog(
-            onDismissRequest = { /* no-op - blocking modal */ },
-            confirmButton = {
-                Button(onClick = { (context as? Activity)?.finish() }) {
-                    Text("OK")
-                }
-            },
-            title = { Text("Update Required") },
-            text = { Text("Update to latest version. Application will be closed") },
-            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
-        )
     }
 }

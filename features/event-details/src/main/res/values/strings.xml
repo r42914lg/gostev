@@ -1,0 +1,16 @@
+<resources>
+    <string name="details_prev">Prev</string>
+    <string name="details_next">Next</string>
+    <string name="details_event_pagination">Event %1$d of %2$d</string>
+    <string name="details_status_confirmed">Confirmed</string>
+    <string name="details_status_applied">Applied</string>
+    <string name="details_status_not_registered">Not Registered</string>
+    <string name="details_skills_required">Skills required for this event:</string>
+    <string name="details_authorize_to_apply">Authorize to apply for event</string>
+    <string name="details_apply">Apply</string>
+    <string name="details_cancel_registration">Cancel registration</string>
+    <string name="details_msg_app_success">Application successful</string>
+    <string name="details_msg_app_failed">Application failed</string>
+    <string name="details_msg_cancel_success">Registration canceled</string>
+    <string name="details_msg_cancel_failed">Cancellation failed</string>
+</resources>

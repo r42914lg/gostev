@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.r42914lg.catering.designsys.CateringTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -128,7 +129,11 @@ private fun ProfileView(
                     strokeWidth = 2.dp
                 )
             } else {
-                Text("Sign out", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = stringResource(R.string.auth_sign_out),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -141,7 +146,11 @@ private fun AuthForm(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = if (state.isSignupMode) "Create account" else "Sign in",
+            text = if (state.isSignupMode) {
+                stringResource(R.string.auth_create_account)
+            } else {
+                stringResource(R.string.auth_sign_in)
+            },
             fontSize = 22.sp,
             fontWeight = FontWeight.Medium,
             color = CateringTheme.colors.onBackground
@@ -150,27 +159,27 @@ private fun AuthForm(
         Spacer(modifier = Modifier.height(CateringTheme.spacing.xxl))
 
         if (state.isSignupMode) {
-            FieldLabel("Name")
+            FieldLabel(stringResource(R.string.auth_label_name))
             AuthTextField(
                 value = state.name,
                 onValueChange = { onAction(AuthAction.NameChanged(it)) },
-                placeholder = "Your name"
+                placeholder = stringResource(R.string.auth_placeholder_name)
             )
         }
 
-        FieldLabel("Email")
+        FieldLabel(stringResource(R.string.auth_label_email))
         AuthTextField(
             value = state.email,
             onValueChange = { onAction(AuthAction.EmailChanged(it)) },
-            placeholder = "you@email.com",
+            placeholder = stringResource(R.string.auth_placeholder_email),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
 
-        FieldLabel("Password")
+        FieldLabel(stringResource(R.string.auth_label_password))
         AuthTextField(
             value = state.password,
             onValueChange = { onAction(AuthAction.PasswordChanged(it)) },
-            placeholder = "••••••••",
+            placeholder = stringResource(R.string.auth_placeholder_password),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
@@ -209,7 +218,11 @@ private fun AuthForm(
                 )
             } else {
                 Text(
-                    text = if (state.isSignupMode) "Create account" else "Sign in",
+                    text = if (state.isSignupMode) {
+                        stringResource(R.string.auth_create_account)
+                    } else {
+                        stringResource(R.string.auth_sign_in)
+                    },
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -224,7 +237,11 @@ private fun AuthForm(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (state.isSignupMode) "Already have an account? " else "Don't have an account? ",
+                text = if (state.isSignupMode) {
+                    stringResource(R.string.auth_already_have_account)
+                } else {
+                    stringResource(R.string.auth_dont_have_account)
+                },
                 fontSize = 12.5.sp,
                 color = CateringTheme.colors.muted
             )
@@ -233,7 +250,11 @@ private fun AuthForm(
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Text(
-                    text = if (state.isSignupMode) "Sign in" else "Sign up",
+                    text = if (state.isSignupMode) {
+                        stringResource(R.string.auth_sign_in)
+                    } else {
+                        stringResource(R.string.auth_sign_up)
+                    },
                     fontSize = 12.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = CateringTheme.colors.brand
