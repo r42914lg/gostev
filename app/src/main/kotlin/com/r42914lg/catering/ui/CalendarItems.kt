@@ -39,15 +39,7 @@ import com.r42914lg.catering.mvi.MainEffect
 import com.r42914lg.catering.mvi.MainStateHolder
 import com.r42914lg.catering.mvi.ScreenEvent
 import com.r42914lg.catering.mvi.ScreenState
-import com.r42914lg.catering.theme.Brick
-import com.r42914lg.catering.theme.Bronze
-import com.r42914lg.catering.theme.CateringTheme
-import com.r42914lg.catering.theme.Hairline
-import com.r42914lg.catering.theme.Ink
-import com.r42914lg.catering.theme.Muted
-import com.r42914lg.catering.theme.OtherMonthDay
-import com.r42914lg.catering.theme.Paper
-import com.r42914lg.catering.theme.Pine
+import com.r42914lg.catering.designsys.CateringTheme
 import com.r42914lg.catering.utils.Event
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,12 +59,12 @@ internal fun MonthSelector(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = CateringTheme.spacing.s, vertical = CateringTheme.spacing.s),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onPrevClick) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Prev", tint = Bronze)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Prev", tint = CateringTheme.colors.accent)
         }
         
         Row(verticalAlignment = Alignment.Bottom) {
@@ -80,21 +72,21 @@ internal fun MonthSelector(
                 text = monthTitle,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Medium,
-                color = Ink,
+                color = CateringTheme.colors.onBackground,
                 letterSpacing = (-0.01).sp
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(CateringTheme.spacing.s))
             Text(
                 text = yearTitle,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Normal,
-                color = Muted,
-                modifier = Modifier.padding(bottom = 0.dp)
+                color = CateringTheme.colors.muted,
+                modifier = Modifier.padding(bottom = CateringTheme.spacing.default)
             )
         }
 
         IconButton(onClick = onNextClick) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next", tint = Bronze)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next", tint = CateringTheme.colors.accent)
         }
     }
 }
@@ -102,13 +94,14 @@ internal fun MonthSelector(
 @Composable
 internal fun WeekdayHeader() {
     val weekdays = listOf("S", "M", "T", "W", "T", "F", "S")
+    val dividerColor = CateringTheme.colors.divider
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = CateringTheme.spacing.m)
             .drawBehind {
                 drawLine(
-                    color = Hairline,
+                    color = dividerColor,
                     start = Offset(0f, size.height),
                     end = Offset(size.width, size.height),
                     strokeWidth = 1.dp.toPx()
@@ -124,7 +117,7 @@ internal fun WeekdayHeader() {
                 textAlign = TextAlign.Center,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
-                color = Muted
+                color = CateringTheme.colors.muted
             )
         }
     }
@@ -138,7 +131,7 @@ internal fun CalendarGrid(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = CateringTheme.spacing.m, vertical = 6.dp)
     ) {
         val rows = days.chunked(7)
         rows.forEach { rowDays ->
@@ -164,7 +157,7 @@ private fun DayCell(
     Column(
         modifier = modifier
             .aspectRatio(0.8f)
-            .padding(top = 8.dp)
+            .padding(top = CateringTheme.spacing.s)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -174,17 +167,17 @@ private fun DayCell(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val dayNumColor = when {
-            day.isToday -> Paper
-            !day.isCurrentMonth -> OtherMonthDay
-            else -> Ink
+            day.isToday -> CateringTheme.colors.background
+            !day.isCurrentMonth -> CateringTheme.colors.disabled
+            else -> CateringTheme.colors.onBackground
         }
 
         val backgroundModifier = if (day.isToday) {
-            Modifier.background(Pine, CircleShape)
+            Modifier.background(CateringTheme.colors.brand, CircleShape)
         } else Modifier
 
         val borderModifier = if (day.isSelected && !day.isToday) {
-            Modifier.border(1.5.dp, Pine, CircleShape)
+            Modifier.border(1.5.dp, CateringTheme.colors.brand, CircleShape)
         } else Modifier
 
         Box(
@@ -205,7 +198,7 @@ private fun DayCell(
         if (day.isCurrentMonth) {
             EventDots(dots = day.dots)
         } else {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(CateringTheme.spacing.m))
         }
     }
 }
@@ -224,9 +217,9 @@ private fun EventDots(dots: List<EventDot>) {
         
         displayedDots.forEach { dot ->
             val color = when (dot.status) {
-                EventDot.Status.CONFIRMED -> Pine
-                EventDot.Status.NOT_REGISTERED -> Brick
-                EventDot.Status.APPLIED -> Bronze
+                EventDot.Status.CONFIRMED -> CateringTheme.colors.brand
+                EventDot.Status.NOT_REGISTERED -> CateringTheme.colors.error
+                EventDot.Status.APPLIED -> CateringTheme.colors.accent
             }
             Box(
                 modifier = Modifier
@@ -240,7 +233,7 @@ private fun EventDots(dots: List<EventDot>) {
                 text = "+${dots.size - maxDots}",
                 fontSize = 9.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Muted,
+                color = CateringTheme.colors.muted,
                 lineHeight = 1.sp
             )
         }

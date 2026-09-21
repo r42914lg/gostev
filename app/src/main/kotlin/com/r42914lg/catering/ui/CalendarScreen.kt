@@ -28,7 +28,7 @@ import com.r42914lg.catering.core.data.model.CalendarEvent
 import com.r42914lg.catering.secret.SecretPanel
 import com.r42914lg.catering.details.DetailsContent
 import com.r42914lg.catering.mvi.*
-import com.r42914lg.catering.theme.*
+import com.r42914lg.catering.designsys.*
 import com.r42914lg.catering.utils.CollectEvents
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -84,7 +84,7 @@ internal fun CalendarScreen(
             drawerContent = {
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     ModalDrawerSheet(
-                        drawerContainerColor = Paper,
+                        drawerContainerColor = CateringTheme.colors.background,
                         drawerShape = RoundedCornerShape(0.dp),
                         modifier = Modifier.width(284.dp)
                     ) {
@@ -99,7 +99,7 @@ internal fun CalendarScreen(
                     drawerState = drawerState,
                     drawerContent = {
                         ModalDrawerSheet(
-                            drawerContainerColor = Paper,
+                            drawerContainerColor = CateringTheme.colors.background,
                             drawerShape = RoundedCornerShape(0.dp),
                             modifier = Modifier.width(284.dp)
                         ) {
@@ -110,18 +110,18 @@ internal fun CalendarScreen(
                 ) {
                     Scaffold(
                         modifier = modifier.fillMaxSize(),
-                        containerColor = Paper,
+                        containerColor = CateringTheme.colors.background,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = {
                             CenterAlignedTopAppBar(
-                                title = { Text("Calendar", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Ink) },
+                                title = { Text("Calendar", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = CateringTheme.colors.onBackground) },
                                 navigationIcon = {
                                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Ink)
+                                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = CateringTheme.colors.onBackground)
                                     }
                                 },
                                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                    containerColor = Paper
+                                    containerColor = CateringTheme.colors.background
                                 )
                             )
                         }
@@ -146,7 +146,7 @@ internal fun CalendarScreen(
                                             onBannerClick = { eventId ->
                                                 stateHolder.onScreenAction(ScreenEvent.BannerClicked(eventId))
                                             },
-                                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                                            modifier = Modifier.padding(top = CateringTheme.spacing.l, bottom = CateringTheme.spacing.s)
                                         )
                                     }
                                     MonthSelector(
@@ -210,7 +210,7 @@ internal fun CalendarScreen(
                                 showBottomSheetForDay = null
                             },
                             sheetState = sheetState,
-                            containerColor = Paper,
+                            containerColor = CateringTheme.colors.background,
                             dragHandle = null
                         ) {
                         DetailsContent(

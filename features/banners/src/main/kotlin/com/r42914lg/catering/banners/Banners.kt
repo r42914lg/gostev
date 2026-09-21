@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -28,6 +27,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.r42914lg.catering.core.data.model.Banner
+import com.r42914lg.catering.designsys.CateringTheme
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
@@ -61,8 +61,8 @@ fun BannersListView(
                 modifier = modifier.background(bannerBackgroundColor),
                 state = lazyListState,
                 flingBehavior = flingBehavior,
-                horizontalArrangement = spacedBy(8.dp, Alignment.CenterHorizontally),
-                contentPadding = PaddingValues(start = 16.dp)
+                horizontalArrangement = spacedBy(CateringTheme.spacing.s, Alignment.CenterHorizontally),
+                contentPadding = PaddingValues(start = CateringTheme.spacing.l)
             ) {
                 items(Int.MAX_VALUE) {
                     val index = it % banners.size
@@ -109,14 +109,14 @@ fun BannerView(
     banner: Banner,
     baseUrl: String,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color.White,
+    backgroundColor: Color = CateringTheme.colors.background,
     onBannerClick: (Long) -> Unit = {},
 ) {
     Box (
         modifier = modifier
             .size(BANNER_WIDTH.dp, BANNER_HEIGHT.dp)
-            .background(backgroundColor, RoundedCornerShape(16.dp))
-            .clip(RoundedCornerShape(16.dp))
+            .background(backgroundColor, CateringTheme.shapes.card)
+            .clip(CateringTheme.shapes.card)
             .noRippleClick {
                 banner.eventId?.let {
                     onBannerClick(it)

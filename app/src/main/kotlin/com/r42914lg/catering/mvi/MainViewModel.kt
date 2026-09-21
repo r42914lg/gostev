@@ -14,7 +14,17 @@ import com.r42914lg.catering.utils.Event
 import com.r42914lg.catering.utils.combine
 import com.r42914lg.catering.utils.eventFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
@@ -67,12 +77,12 @@ internal class MainViewModel(
             .flatMapLatest { action -> reduce(action) },
         userManager.userData,
         observeBannersUseCase()
-            .onStart { emit(emptyList<Banner>() to "rrr") },
+            .onStart { emit(emptyList<Banner>() to "") },
         observeForceUpdateUseCase(),
         observeCalendarUseCase(currentMonthFlow, selectedDateFlow),
         currentMonthFlow,
     ) {
-        state: ScreenState,
+        reducedState: ScreenState,
         userData: User?,
         bannersInfo: Pair<List<Banner>, String>,
         isUpdateRequired: Boolean, days: List<CalendarDay>,
@@ -80,7 +90,7 @@ internal class MainViewModel(
 
         val (banners, bannersBaseUrl) = bannersInfo
         ScreenState(
-            isLoading = state.isLoading,
+            isLoading = reducedState.isLoading,
             userName = userData?.name,
             monthTitle = currentMonth.month.name.lowercase().replaceFirstChar { it.uppercase() },
             yearTitle = currentMonth.year.toString(),

@@ -12,16 +12,14 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.r42914lg.catering.designsys.CateringTheme
 import com.r42914lg.catering.remoteconfig.RemoteConfig
-import com.r42914lg.catering.remoteconfig.RemoteConfigKey
-import com.r42914lg.catering.theme.CateringTheme
 import com.r42914lg.catering.ui.AnimatedSplashScreen
 import com.r42914lg.catering.ui.CalendarScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
 
@@ -30,6 +28,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
             CateringTheme {

@@ -32,7 +32,6 @@ internal class CalendarDataSourceImpl(
         _calendarEvents.value = list
         Result.success(Unit)
     } catch (e: Exception) {
-        e.printStackTrace()
         Result.failure(e)
     }
 
@@ -48,7 +47,6 @@ internal class CalendarDataSourceImpl(
         _assignments.value = list
         Result.success(Unit)
     } catch (e: Exception) {
-        e.printStackTrace()
         Result.failure(e)
     }
 
@@ -60,7 +58,6 @@ internal class CalendarDataSourceImpl(
             .decodeList<EventSkillJoin>()
         Result.success(results.map { it.skills })
     } catch (e: Exception) {
-        e.printStackTrace()
         Result.failure(e)
     }
 

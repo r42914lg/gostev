@@ -1,37 +1,25 @@
 package com.r42914lg.catering.auth
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.r42914lg.catering.designsys.CateringTheme
 import org.koin.androidx.compose.koinViewModel
-
-// Design Colors
-private val Paper = Color(0xFFFAF9F6)
-private val Ink = Color(0xFF171512)
-private val Pine = Color(0xFF2E4B43)
-private val Bronze = Color(0xFF8A6E4B)
-private val Brick = Color(0xFFB23A2E)
-private val Hairline = Color(0xFFE5E1D8)
-private val Muted = Color(0xFF8A857C)
 
 @Composable
 fun AuthContent(
@@ -57,8 +45,13 @@ private fun AuthContentInternal(
         modifier = modifier
             .fillMaxHeight()
             .width(284.dp)
-            .background(Paper)
-            .padding(top = 60.dp, start = 24.dp, end = 24.dp, bottom = 28.dp)
+            .background(CateringTheme.colors.background)
+            .padding(
+                top = 60.dp,
+                start = CateringTheme.spacing.xxl,
+                end = CateringTheme.spacing.xxl,
+                bottom = CateringTheme.spacing.xxl
+            )
     ) {
         if (state.currentUser != null) {
             ProfileView(
@@ -90,46 +83,50 @@ private fun ProfileView(
             modifier = Modifier
                 .size(64.dp)
                 .clip(CircleShape)
-                .background(Bronze),
+                .background(CateringTheme.colors.accent),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = user.name.take(1).uppercase(),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Medium,
-                color = Paper
+                color = CateringTheme.colors.background
             )
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(CateringTheme.spacing.m))
 
         Text(
             text = user.name,
             fontSize = 19.sp,
             fontWeight = FontWeight.Medium,
-            color = Ink
+            color = CateringTheme.colors.onBackground
         )
 
         Text(
             text = user.email,
             fontSize = 13.sp,
-            color = Muted
+            color = CateringTheme.colors.muted
         )
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(CateringTheme.spacing.xxl))
 
         OutlinedButton(
             onClick = onSignOut,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
-            shape = RoundedCornerShape(14.dp),
-            border = androidx.compose.foundation.BorderStroke(1.5.dp, Brick),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Brick),
+            shape = CateringTheme.shapes.button,
+            border = BorderStroke(1.5.dp, CateringTheme.colors.error),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = CateringTheme.colors.error),
             enabled = !isLoading
         ) {
             if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Brick, strokeWidth = 2.dp)
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = CateringTheme.colors.error,
+                    strokeWidth = 2.dp
+                )
             } else {
                 Text("Sign out", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             }
@@ -147,10 +144,10 @@ private fun AuthForm(
             text = if (state.isSignupMode) "Create account" else "Sign in",
             fontSize = 22.sp,
             fontWeight = FontWeight.Medium,
-            color = Ink
+            color = CateringTheme.colors.onBackground
         )
 
-        Spacer(modifier = Modifier.height(26.dp))
+        Spacer(modifier = Modifier.height(CateringTheme.spacing.xxl))
 
         if (state.isSignupMode) {
             FieldLabel("Name")
@@ -181,9 +178,9 @@ private fun AuthForm(
         if (state.error != null) {
             Text(
                 text = state.error,
-                color = Brick,
+                color = CateringTheme.colors.error,
                 fontSize = 12.sp,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = CateringTheme.spacing.s)
             )
         }
 
@@ -197,12 +194,19 @@ private fun AuthForm(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Pine, contentColor = Paper),
+            shape = CateringTheme.shapes.button,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = CateringTheme.colors.brand,
+                contentColor = CateringTheme.colors.background
+            ),
             enabled = isButtonEnabled
         ) {
             if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Paper, strokeWidth = 2.dp)
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = CateringTheme.colors.background,
+                    strokeWidth = 2.dp
+                )
             } else {
                 Text(
                     text = if (state.isSignupMode) "Create account" else "Sign in",
@@ -215,14 +219,14 @@ private fun AuthForm(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp),
+                .padding(top = CateringTheme.spacing.l),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = if (state.isSignupMode) "Already have an account? " else "Don't have an account? ",
                 fontSize = 12.5.sp,
-                color = Muted
+                color = CateringTheme.colors.muted
             )
             TextButton(
                 onClick = { onAction(AuthAction.SwitchModeClicked) },
@@ -232,7 +236,7 @@ private fun AuthForm(
                     text = if (state.isSignupMode) "Sign in" else "Sign up",
                     fontSize = 12.5.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Pine
+                    color = CateringTheme.colors.brand
                 )
             }
         }
@@ -245,9 +249,9 @@ private fun FieldLabel(text: String) {
         text = text.uppercase(),
         fontSize = 11.sp,
         fontWeight = FontWeight.SemiBold,
-        color = Muted,
+        color = CateringTheme.colors.muted,
         letterSpacing = 0.04.sp,
-        modifier = Modifier.padding(bottom = 6.dp)
+        modifier = Modifier.padding(bottom = CateringTheme.spacing.xs)
     )
 }
 
@@ -264,15 +268,15 @@ private fun AuthTextField(
         onValueChange = onValueChange,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp),
-        placeholder = { Text(placeholder, color = Color(0xFFB7B3A9), fontSize = 14.sp) },
-        shape = RoundedCornerShape(12.dp),
+            .padding(bottom = CateringTheme.spacing.l),
+        placeholder = { Text(placeholder, color = CateringTheme.colors.muted, fontSize = 14.sp) },
+        shape = CateringTheme.shapes.card,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Pine,
-            unfocusedBorderColor = Hairline,
-            cursorColor = Pine,
-            focusedTextColor = Ink,
-            unfocusedTextColor = Ink
+            focusedBorderColor = CateringTheme.colors.brand,
+            unfocusedBorderColor = CateringTheme.colors.divider,
+            cursorColor = CateringTheme.colors.brand,
+            focusedTextColor = CateringTheme.colors.onBackground,
+            unfocusedTextColor = CateringTheme.colors.onBackground
         ),
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,

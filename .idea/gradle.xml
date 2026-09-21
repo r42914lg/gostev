@@ -41,6 +41,7 @@
             <option value="$PROJECT_DIR$/features/secret-panel" />
             <option value="$PROJECT_DIR$/platform" />
             <option value="$PROJECT_DIR$/platform/android-utils" />
+            <option value="$PROJECT_DIR$/platform/design-sys" />
             <option value="$PROJECT_DIR$/platform/utils" />
           </set>
         </option>

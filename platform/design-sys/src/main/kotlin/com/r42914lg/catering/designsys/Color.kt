@@ -1,4 +1,4 @@
-package com.r42914lg.catering.theme
+package com.r42914lg.catering.designsys
 
 import androidx.compose.ui.graphics.Color
 

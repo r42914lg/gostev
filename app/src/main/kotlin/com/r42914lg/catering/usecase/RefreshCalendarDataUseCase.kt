@@ -8,7 +8,6 @@ internal class RefreshCalendarDataUseCase(
     suspend operator fun invoke(): Boolean {
         val eventsResult = calendarDataSource.fetchCalendarEvents()
         val assignmentsResult = calendarDataSource.fetchAssignments()
-        
         return eventsResult.isSuccess && assignmentsResult.isSuccess
     }
 }

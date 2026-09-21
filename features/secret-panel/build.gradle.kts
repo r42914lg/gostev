@@ -8,6 +8,7 @@ android {
 
 dependencies {
     implementation(project(":core:remote-config:api"))
+    implementation(project(":platform:design-sys"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)

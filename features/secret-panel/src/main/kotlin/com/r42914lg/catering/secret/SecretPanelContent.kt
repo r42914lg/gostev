@@ -6,22 +6,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.r42914lg.catering.designsys.CateringTheme
 import com.r42914lg.catering.remoteconfig.RemoteConfigDebugInfo
-import com.r42914lg.catering.remoteconfig.RemoteConfigKey
 import org.koin.androidx.compose.koinViewModel
-
-private val Ink = Color(0xFF171512)
-private val Pine = Color(0xFF2E4B43)
-private val Brick = Color(0xFFB23A2E)
-private val Hairline = Color(0xFFE5E1D8)
-private val Muted = Color(0xFF8A857C)
 
 @Composable
 fun SecretPanel(
@@ -32,15 +28,15 @@ fun SecretPanel(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(CateringTheme.spacing.l)
             .verticalScroll(rememberScrollState())
     ) {
         Text(
             text = "Debug Panel",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = Ink,
-            modifier = Modifier.padding(bottom = 16.dp)
+            color = CateringTheme.colors.onBackground,
+            modifier = Modifier.padding(bottom = CateringTheme.spacing.l)
         )
 
         state.configs.forEach { info ->
@@ -49,7 +45,10 @@ fun SecretPanel(
                 onUpdate = { newValue -> viewModel.updateOverride(info.configKey, newValue) },
                 onClear = { viewModel.clearOverride(info.configKey) }
             )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Hairline)
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = CateringTheme.spacing.m),
+                color = CateringTheme.colors.divider
+            )
         }
     }
 }
@@ -67,10 +66,10 @@ private fun ConfigItem(
             text = info.configKey.key,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Muted
+            color = CateringTheme.colors.muted
         )
         
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(CateringTheme.spacing.xs))
         
         OutlinedTextField(
             value = textValue,
@@ -84,8 +83,8 @@ private fun ConfigItem(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Clear override",
-                            tint = Brick,
-                            modifier = Modifier.size(16.dp)
+                            tint = CateringTheme.colors.error,
+                            modifier = Modifier.size(CateringTheme.spacing.l)
                         )
                     }
                 }
@@ -100,7 +99,7 @@ private fun ConfigItem(
                 onClick = { onUpdate(textValue) },
                 enabled = textValue != info.currentValue
             ) {
-                Text("Apply Override", fontSize = 12.sp, color = Pine)
+                Text("Apply Override", fontSize = 12.sp, color = CateringTheme.colors.brand)
             }
         }
     }

@@ -1,15 +1,17 @@
 package com.r42914lg.catering.details
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,20 +21,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.r42914lg.catering.core.data.model.CalendarEvent
-import com.r42914lg.catering.core.data.model.EventAssignment
+import com.r42914lg.catering.designsys.CateringTheme
 import com.r42914lg.catering.utils.CollectEvents
 import kotlinx.datetime.LocalDate
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-
-private val Paper = Color(0xFFFAF9F6)
-private val Ink = Color(0xFF171512)
-private val Pine = Color(0xFF2E4B43)
-private val PineLight = Color(0xFFE7EEEC)
-private val Bronze = Color(0xFF8A6E4B)
-private val Brick = Color(0xFFB23A2E)
-private val Hairline = Color(0xFFE5E1D8)
-private val Muted = Color(0xFF8A857C)
 
 @Composable
 fun DetailsContent(
@@ -56,24 +49,24 @@ fun DetailsContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Paper)
-            .padding(horizontal = 20.dp, vertical = 10.dp),
+            .background(CateringTheme.colors.background)
+            .padding(horizontal = CateringTheme.spacing.xl, vertical = CateringTheme.spacing.m),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
                 .width(36.dp)
-                .height(4.dp)
+                .height(CateringTheme.spacing.xs)
                 .clip(CircleShape)
-                .background(Hairline)
+                .background(CateringTheme.colors.divider)
         )
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(CateringTheme.spacing.l))
         state.event?.let { e ->
             Text(
                 text = "${e.date.dayOfWeek.name}, ${e.date.month.name} ${e.date.dayOfMonth}".uppercase(),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Muted,
+                color = CateringTheme.colors.muted,
                 letterSpacing = 0.04.sp
             )
         }
@@ -91,7 +84,7 @@ fun DetailsContent(
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = "Prev",
-                        tint = if (state.index > 0) Bronze else Color.Transparent
+                        tint = if (state.index > 0) CateringTheme.colors.accent else Color.Transparent
                     )
                 }
             } else {
@@ -106,14 +99,14 @@ fun DetailsContent(
                     Text(
                         text = "Event ${state.index + 1} of ${state.total}",
                         fontSize = 11.sp,
-                        color = Muted
+                        color = CateringTheme.colors.muted
                     )
                 }
                 Text(
                     text = state.event?.name ?: "",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Ink,
+                    color = CateringTheme.colors.onBackground,
                     textAlign = TextAlign.Center,
                     lineHeight = 26.sp
                 )
@@ -127,7 +120,7 @@ fun DetailsContent(
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = "Next",
-                        tint = if (state.index < state.total - 1) Bronze else Color.Transparent
+                        tint = if (state.index < state.total - 1) CateringTheme.colors.accent else Color.Transparent
                     )
                 }
             } else {
@@ -135,7 +128,7 @@ fun DetailsContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(CateringTheme.spacing.m))
 
         if (state.isAuthorized) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -143,7 +136,7 @@ fun DetailsContent(
                     modifier = Modifier
                         .size(7.dp)
                         .clip(CircleShape)
-                        .background(if (state.status == DetailsState.Status.CONFIRMED) Pine else Brick)
+                        .background(if (state.status == DetailsState.Status.CONFIRMED) CateringTheme.colors.brand else CateringTheme.colors.error)
                 )
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
@@ -154,47 +147,47 @@ fun DetailsContent(
                     },
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Muted
+                    color = CateringTheme.colors.muted
                 )
             }
 
             if (state.status == DetailsState.Status.NOT_REGISTERED && state.availableSkills.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(CateringTheme.spacing.xl))
                 Text(
                     text = "Skills required for this event:".uppercase(),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Bronze,
+                    color = CateringTheme.colors.accent,
                     modifier = Modifier.fillMaxWidth(),
                     letterSpacing = 0.05.sp
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(CateringTheme.spacing.s))
                 state.availableSkills.forEach { skill ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { viewModel.onAction(DetailsAction.SkillToggled(skill.id)) }
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = CateringTheme.spacing.xs),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(
                             checked = state.selectedSkillIds.contains(skill.id),
                             onCheckedChange = { viewModel.onAction(DetailsAction.SkillToggled(skill.id)) },
-                            colors = CheckboxDefaults.colors(checkedColor = Pine)
+                            colors = CheckboxDefaults.colors(checkedColor = CateringTheme.colors.brand)
                         )
                         Text(
                             text = skill.name,
                             fontSize = 14.sp,
-                            color = Ink,
-                            modifier = Modifier.padding(start = 8.dp)
+                            color = CateringTheme.colors.onBackground,
+                            modifier = Modifier.padding(start = CateringTheme.spacing.s)
                         )
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-        HorizontalDivider(color = Hairline)
+        Spacer(modifier = Modifier.height(CateringTheme.spacing.xl))
+        HorizontalDivider(color = CateringTheme.colors.divider)
         Spacer(modifier = Modifier.height(18.dp))
 
         Button(
@@ -213,18 +206,18 @@ fun DetailsContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
-            shape = RoundedCornerShape(14.dp),
+            shape = CateringTheme.shapes.button,
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (!state.isAuthorized || state.status == DetailsState.Status.NOT_REGISTERED) Pine else Color.Transparent,
-                contentColor = if (!state.isAuthorized || state.status == DetailsState.Status.NOT_REGISTERED) Paper else Brick
+                containerColor = if (!state.isAuthorized || state.status == DetailsState.Status.NOT_REGISTERED) CateringTheme.colors.brand else Color.Transparent,
+                contentColor = if (!state.isAuthorized || state.status == DetailsState.Status.NOT_REGISTERED) CateringTheme.colors.background else CateringTheme.colors.error
             ),
-            border = if (state.isAuthorized && state.status != DetailsState.Status.NOT_REGISTERED) 
-                androidx.compose.foundation.BorderStroke(1.5.dp, Brick) 
+            border = if (state.isAuthorized && state.status != DetailsState.Status.NOT_REGISTERED)
+                BorderStroke(1.5.dp, CateringTheme.colors.error)
             else null,
             contentPadding = PaddingValues(0.dp)
         ) {
             if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Paper)
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = CateringTheme.colors.background)
             } else {
                 Text(
                     text = when {

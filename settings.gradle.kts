@@ -24,6 +24,7 @@ rootProject.name = "Catering"
 include(":app")
 include(":platform:utils")
 include(":platform:android-utils")
+include(":platform:design-sys")
 include(":core:remote-config:api")
 include(":core:remote-config:impl")
 include(":core:prefs:api")

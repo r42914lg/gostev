@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":core:data:api"))
     implementation(project(":platform:utils"))
     implementation(project(":platform:android-utils"))
+    implementation(project(":platform:design-sys"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
